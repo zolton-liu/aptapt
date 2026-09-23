@@ -1,0 +1,31 @@
+{
+  "sampling_method": "Python random.Random(seed).sample(sorted(public_task_ids), 10)",
+  "seed": 20260923,
+  "population_size": 87,
+  "population_sha256": "45e4c16230e9f09e157e070430d550b3a74b900a71d3fa3fbb2c4974dba8d1f5",
+  "draws_per_task": 1,
+  "generation_seed": 0,
+  "temperature": 0,
+  "max_steps": 18,
+  "task_timeout_sec": 900,
+  "context_memory_enabled": true,
+  "starters_disabled": true,
+  "framework_source_sha256": "38195b1819b63686f28fda3cd1bf650201861cd7f9545f05b1ec3f701a10ca51",
+  "experiment": "workflow-v6-context-memory-random10-20260923-coder14b",
+  "task_list": "configs/random10-20260923.txt",
+  "model": "qwen2.5-coder:14b",
+  "model_digest": "9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849",
+  "tasks": [
+    "t1-geometric-mean-reverting-jd",
+    "t1-earnings-surprise-calculator",
+    "t1-fama-french-factor-model-new",
+    "t1-implied-vol-approximations",
+    "t1-localvol-barrier",
+    "t1-pca-factor-portfolio",
+    "t1-dcc-garch-portfolio-var",
+    "t1-american-option-fd-new",
+    "t1-variance-swap-replication",
+    "t1-asian-option-levy-curran"
+  ],
+  "interpretation": "One complete agent rollout per task, including its bounded internal repairs; no rerun or best-of-N selection. Local public checker, not official house-model leaderboard."
+}

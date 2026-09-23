@@ -1,0 +1,12 @@
+# Uniform sample without replacement from 87 sorted public task IDs.
+# Python random.Random(20260923).sample(pool, 10); preserve drawn order.
+t1-geometric-mean-reverting-jd
+t1-earnings-surprise-calculator
+t1-fama-french-factor-model-new
+t1-implied-vol-approximations
+t1-localvol-barrier
+t1-pca-factor-portfolio
+t1-dcc-garch-portfolio-var
+t1-american-option-fd-new
+t1-variance-swap-replication
+t1-asian-option-levy-curran

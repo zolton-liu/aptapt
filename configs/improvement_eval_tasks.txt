@@ -1,0 +1,12 @@
+# Frozen targeted comparison: prior passes, near-passes, and execution failures.
+t1-earnings-surprise-calculator
+t1-historical-var-data-prep
+t1-pca-factor-portfolio
+t1-cir-bond-pricing
+t1-corporate-action-adjustment
+t1-interest-rate-cap-floor
+t1-EXAMPLE-bs-greeks-pde
+t1-etf-overlap-redemption-pressure
+t1-option-put-call-parity-forward-audit
+t1-implied-vol-approximations
+t1-asian-option-levy-curran

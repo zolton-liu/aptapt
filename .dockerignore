@@ -1,0 +1,17 @@
+.git
+.github
+.venv
+.venv-*
+.env
+.env.*
+*.pem
+*.key
+submission.json
+eval_runs
+reports
+__pycache__
+.pytest_cache
+tests
+examples
+outputs
+work

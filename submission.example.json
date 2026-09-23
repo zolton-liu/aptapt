@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "interface_version": "2.0",
+  "competition_id": "agenthon2026-coding-dev",
+  "team_id": "replace-with-team-id",
+  "track": "coding",
+  "phase": "dev",
+  "category": "api",
+  "image": {
+    "registry": "docker.io",
+    "repository": "replace-with-team/agenthon-t1-minimal",
+    "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "image_access": "public",
+  "models": [
+    {
+      "name": "replace-with-official-model-name",
+      "version": "replace-with-dated-version",
+      "training_cutoff": "replace-with-official-cutoff",
+      "access": "api",
+      "revision": "replace-with-official-revision"
+    }
+  ],
+  "license": "MIT",
+  "descriptor_digest": "sha256:257bbdf3eb2bb6fd9b1ffa2f7ff5c54274edbcbb96af3a1f4ab38a86aab327b6"
+}

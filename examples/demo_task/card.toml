@@ -1,0 +1,19 @@
+schema_version = "2.0"
+
+[task]
+id = "demo-arithmetic-returns"
+track = "coding"
+title = "Arithmetic returns demo"
+split = "local"
+
+[provenance]
+data_cutoff = "2026-01-01"
+
+[contamination]
+canary_guid = ""
+
+[agent]
+timeout_sec = 300.0
+
+[environment]
+network = "none"

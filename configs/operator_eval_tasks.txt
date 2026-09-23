@@ -1,0 +1,5 @@
+# Deterministic operator and model-retry validation.
+t1-cir-bond-pricing
+t1-corporate-action-adjustment
+t1-interest-rate-cap-floor
+t1-option-put-call-parity-forward-audit

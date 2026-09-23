@@ -1,0 +1,11 @@
+# Frozen, starter-disabled public-dev evaluation slice.
+t1-cir-bond-pricing
+t1-implied-vol-approximations
+t1-historical-var-data-prep
+t1-fx-forward-cross-rate
+t1-credit-spread-decomposition
+t1-copula-sampling-rank-correlation
+t1-earnings-surprise-calculator
+t1-corporate-action-adjustment
+t1-pca-factor-portfolio
+t1-spread-option-kirk-margrabe

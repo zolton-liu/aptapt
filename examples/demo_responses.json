@@ -1,0 +1,46 @@
+{
+  "responses": [
+    {
+      "tool": "read_file",
+      "arguments": {
+        "path": "input/environment/data/prices.csv",
+        "start_line": 1,
+        "end_line": 20
+      }
+    },
+    {
+      "tool": "write_file",
+      "arguments": {
+        "path": "scratch/solve.py",
+        "content": "import csv\nimport json\nimport os\nfrom pathlib import Path\n\ntask = Path(os.environ['TASK_DIR'])\nout = Path(os.environ['OUTPUT_DIR'])\nwith (task / 'environment/data/prices.csv').open(newline='') as handle:\n    prices = [float(row['price']) for row in csv.DictReader(handle)]\nreturns = [round(prices[i] / prices[i - 1] - 1.0, 8) for i in range(1, len(prices))]\nout.mkdir(parents=True, exist_ok=True)\n(out / 'results.json').write_text(json.dumps({'returns': returns}, allow_nan=False) + '\\n')\n"
+      }
+    },
+    {
+      "tool": "run_python",
+      "arguments": {
+        "script": "scratch/solve.py",
+        "args": [],
+        "timeout_sec": 10
+      }
+    },
+    {
+      "tool": "read_file",
+      "arguments": {
+        "path": "output/results.json",
+        "start_line": 1,
+        "end_line": 20
+      }
+    },
+    {
+      "tool": "validate_outputs",
+      "arguments": {}
+    },
+    {
+      "tool": "finish",
+      "arguments": {
+        "summary": "Created and checked results.json from the supplied price data."
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,3 @@
+# Fast capability probe; never use this score as the published pass@1 curve.
+t1-historical-var-data-prep
+t1-fx-forward-cross-rate

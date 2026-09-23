@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agenthon-t1-minimal"
+version = "0.1.0"
+description = "A small, auditable coding agent for Agenthon 2026 Track 1"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Agenthon T1 Minimal contributors" }]
+dependencies = []
+
+[project.scripts]
+solve = "qfa_agent.cli:main"
+qfa-seal-descriptor = "qfa_agent.descriptor:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+

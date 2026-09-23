@@ -1,0 +1,6 @@
+# Cross-category architecture evaluation: one task per routed solver family.
+t1-fx-forward-cross-rate
+t1-historical-var-data-prep
+t1-cir-bond-pricing
+t1-implied-vol-approximations
+t1-pca-factor-portfolio
