@@ -532,6 +532,11 @@ class TaskWorkspace:
         )
         if source_area != "input" or destination_area != "scratch":
             raise WorkspaceError("copy_file is limited to visible input -> scratch")
+        if source.name.lower() == "fetch_data.py":
+            raise WorkspaceError(
+                "fetch_data.py is a dataset-provenance utility, not a solver template; "
+                "use the supplied local data and write scratch/solve.py from the task contract"
+            )
         if not source.is_file() or source.suffix.lower() not in _TEXT_SUFFIXES:
             raise WorkspaceError(
                 "copy_file requires a visible text source; binary tables are already profiled "

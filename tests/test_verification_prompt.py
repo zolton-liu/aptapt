@@ -44,6 +44,8 @@ class VerificationPromptTests(unittest.TestCase):
         self.assertIn('independently calculated identity', prompt)
         self.assertNotIn('audit returns AuditReport', prompt)
         self.assertIn('Use `.iloc[position]`', prompt)
+        self.assertIn('fetch_data.py', prompt)
+        self.assertIn('Never copy or execute', prompt)
 
     def test_strict_template_preserves_implementation_without_audit_exemption(self):
         (self.root/'input/instruction.md').write_text('Fix old API migration; write output/results.json.')

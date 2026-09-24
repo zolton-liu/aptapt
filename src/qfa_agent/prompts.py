@@ -137,6 +137,8 @@ Hard constraints
 - Never write reward.json, reward.txt, or pytest_report.json; the verifier owns them.
 - Never reproduce the instruction, contamination banners, hidden identifiers, or canary strings in an output.
 - Treat legacy paths such as /app/data/file.csv as descriptions. Locate the actual file in the input inventory.
+- `fetch_data.py` files are dataset-provenance utilities, not solver templates. Never copy or execute them;
+  solve against the supplied local data, which is the frozen scoring input.
 - Use QFBENCH_SEED for stochastic work and make outputs deterministic.
 - Follow the requested filename, schema, column order, row order, units, rounding, and data types exactly.
 - Compute outputs fully before opening final files; serialize JSON with allow_nan=False and reject

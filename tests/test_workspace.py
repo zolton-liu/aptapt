@@ -275,6 +275,22 @@ class WorkspaceTests(unittest.TestCase):
         self.assertFalse(hidden.ok)
         self.assertFalse(wrong_destination.ok)
 
+    def test_copy_file_rejects_dataset_fetch_utility_as_solver(self) -> None:
+        fetcher = self.input / "data" / "fetch_data.py"
+        fetcher.write_text("raise RuntimeError('network required')\n", encoding="utf-8")
+        outcome = ToolRouter(self.workspace).dispatch(
+            Action(
+                "copy_file",
+                {
+                    "source": "input/data/fetch_data.py",
+                    "destination": "scratch/solve.py",
+                },
+            )
+        )
+        self.assertFalse(outcome.ok)
+        self.assertIn("dataset-provenance utility", outcome.summary)
+        self.assertFalse((self.scratch / "solve.py").exists())
+
     def test_small_scratch_python_repair_can_auto_overwrite(self) -> None:
         target = self.scratch / "solve.py"
         target.write_text("value = 1\n", encoding="utf-8")
