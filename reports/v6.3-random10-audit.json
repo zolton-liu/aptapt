@@ -1,0 +1,610 @@
+{
+  "experiment": "workflow-v6.3-verifier-memory-random10-20260923-coder14b",
+  "complete": true,
+  "audit_consistent": true,
+  "missing_ids": [],
+  "checks": {
+    "expected_ids_unique": true,
+    "config_order_matches_task_list": true,
+    "result_ids_unique": true,
+    "result_order_matches_prefix": true,
+    "summary_n_tasks": true,
+    "summary_n_passed": true,
+    "starter_false_explicit": true,
+    "summary_rate": true,
+    "summary_duration": true,
+    "summary_input_tokens": true,
+    "summary_output_tokens": true,
+    "source_matches_config": true,
+    "runner_matches_config": true,
+    "snapshot_source_matches_config": true,
+    "snapshot_runner_matches_config": true
+  },
+  "completed_count": 10,
+  "passed_count": 0,
+  "strict_pass_at_1": 0.0,
+  "source_sha256": "9d122a48dcebf245c9824c0eb908b0c1bea5f041cf16e8c1809495e1ae78a28e",
+  "snapshot_source_sha256": "9d122a48dcebf245c9824c0eb908b0c1bea5f041cf16e8c1809495e1ae78a28e",
+  "total_duration_sec": 8501.33225,
+  "request_attempts_total": 154,
+  "responses_completed_total": 149,
+  "details": [
+    {
+      "task_id": "t1-geometric-mean-reverting-jd",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 0,
+        "errors": 34
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.513599,
+      "model_request_attempts": 14,
+      "model_responses_completed": 13,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 3,
+      "failed_stages": {
+        "compute": 2,
+        "load_inputs": 1
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "compute",
+          "error": "LinAlgError: SVD did not converge in Linear Least Squares",
+          "source_sha256": "89abdfc6fa28557a8d80b7ca435fbf688079e05a76b0149b9d931c0c703092f2"
+        },
+        {
+          "stage": "compute",
+          "error": "LinAlgError: SVD did not converge in Linear Least Squares",
+          "source_sha256": "f5105458649c3972aa77bf6ecdfbe030d2ca5bd5fb9c35bc09adbab0675e45d2"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/liuzhuo1qq.com/Documents/Codex/2026-09-12/https-www-agenthon-net-https-www/work/track1-coding-public-full/units/t1-geometric-mean-reverting-jd/fred_rates.csv'",
+          "source_sha256": "c4e23cc36cb11fc493ad4098f4475276289d2289ff4973e3278c1b6c395acf3d"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-earnings-surprise-calculator",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 8,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.52375,
+      "model_request_attempts": 14,
+      "model_responses_completed": 13,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 3,
+      "failed_stages": {
+        "load_inputs": 1,
+        "compute": 2
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "load_inputs",
+          "error": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/liuzhuo1qq.com/Documents/Codex/2026-09-12/https-www-agenthon-net-https-www/work/track1-coding-public-full/units/t1-earnings-surprise-calculator/scratch/earnings.json'",
+          "source_sha256": "3c87a3fae05243bfefff832b03c11ae40b87c98b18fc3b19ddd6830c44e0be38"
+        },
+        {
+          "stage": "compute",
+          "error": "TypeError: string indices must be integers, not 'str'",
+          "source_sha256": "d6842c2bf6babf714dec48df2cb37661d6ef1d103f8ee8783ec23436ba0e50af"
+        },
+        {
+          "stage": "compute",
+          "error": "TypeError: string indices must be integers, not 'str'",
+          "source_sha256": "20eecbe2ccb422ed0df3f6a808bb74c5be501703ba3a62e777a7f9062214e91c"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-fama-french-factor-model-new",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 101,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 836.821855,
+      "model_request_attempts": 12,
+      "model_responses_completed": 12,
+      "agent_message": "stalled: repeated unchanged action after evidence replay; no further model calls",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 3,
+      "failed_stages": {
+        "compute": 3
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "compute",
+          "error": "ValueError: compute must return a non-empty mapping of results; do not write final outputs here",
+          "source_sha256": "7213939cf108354cdc1224584d0b715c3c0bb72fc809d45b3ba7576ae6177e20"
+        },
+        {
+          "stage": "compute",
+          "error": "ValueError: compute must return a non-empty mapping of results; do not write final outputs here",
+          "source_sha256": "3434708d622fd871e636226c9f3a1ed392fb6c7d4d5e5801b188226463c70c0d"
+        },
+        {
+          "stage": "compute",
+          "error": "ValueError: compute must return a non-empty mapping of results; do not write final outputs here",
+          "source_sha256": "7213939cf108354cdc1224584d0b715c3c0bb72fc809d45b3ba7576ae6177e20"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "run_python",
+          "kind": "type",
+          "summary": "Python program failed"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "type",
+          "summary": "updated lines in scratch/solve.py; controller auto-run failed, so repair the solver before another run"
+        },
+        {
+          "tool": "run_python",
+          "kind": "type",
+          "summary": "Python program failed"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-implied-vol-approximations",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 10,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 817.534135,
+      "model_request_attempts": 18,
+      "model_responses_completed": 18,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "updated scratch/solve.py, but Python syntax validation failed"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "run_python",
+          "kind": "syntax",
+          "summary": "Python program failed"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-localvol-barrier",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 7,
+        "errors": 32
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 849.466946,
+      "model_request_attempts": 18,
+      "model_responses_completed": 18,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-pca-factor-portfolio",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 8,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.483705,
+      "model_request_attempts": 15,
+      "model_responses_completed": 14,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 2,
+      "failed_stages": {
+        "load_inputs": 2
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "load_inputs",
+          "error": "ContractError: path does not exist: input/scratch/params.json",
+          "source_sha256": "f5d7a98626f821e4867d09e5f22391d6ce780495d389351dd4fb962b387e9fb8"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "ContractError: input_path requires an exact task-relative path from the inventory",
+          "source_sha256": "2abab4459be6621f3332896b462788d0af2717c1dab1b646a2a4d01244289589"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "run_python",
+          "kind": "path",
+          "summary": "unchanged solve.py already failed; rerunning it cannot make progress"
+        },
+        {
+          "tool": "run_python",
+          "kind": "path",
+          "summary": "unchanged solve.py already failed; rerunning it cannot make progress"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-dcc-garch-portfolio-var",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 63,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 626.833154,
+      "model_request_attempts": 18,
+      "model_responses_completed": 18,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "run_python",
+          "kind": "timeout",
+          "summary": "unchanged solve.py already failed; rerunning it cannot make progress"
+        },
+        {
+          "tool": "run_python",
+          "kind": "timeout",
+          "summary": "unchanged solve.py already failed; rerunning it cannot make progress"
+        },
+        {
+          "tool": "run_python",
+          "kind": "timeout",
+          "summary": "Python program failed"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-american-option-fd-new",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 54,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.512229,
+      "model_request_attempts": 15,
+      "model_responses_completed": 14,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "validate_outputs",
+          "kind": "deliverable",
+          "summary": "output contract checks failed"
+        },
+        {
+          "tool": "write_file",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-variance-swap-replication",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 17,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 893.591354,
+      "model_request_attempts": 14,
+      "model_responses_completed": 14,
+      "agent_message": "stalled: repeated unchanged action after evidence replay; no further model calls",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 3,
+      "failed_stages": {
+        "audit": 3
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "audit",
+          "error": "TypeError: computation() takes 0 positional arguments but 2 were given",
+          "source_sha256": "b0c7d43ec35a220ef57aac4c17a7b7b419135542032cb6edb4b44f375e06d0d9"
+        },
+        {
+          "stage": "audit",
+          "error": "TypeError: computation() takes 0 positional arguments but 2 were given",
+          "source_sha256": "8e1baba666ffef64adfbc549b6d84f1493ba663ede238ddee4dee67b7bb42ebf"
+        },
+        {
+          "stage": "audit",
+          "error": "TypeError: computation() takes 0 positional arguments but 2 were given",
+          "source_sha256": "8e1baba666ffef64adfbc549b6d84f1493ba663ede238ddee4dee67b7bb42ebf"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {
+        "legacy_or_unrecorded": 3
+      },
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-asian-option-levy-curran",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 0,
+        "errors": 25
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.051523,
+      "model_request_attempts": 16,
+      "model_responses_completed": 15,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 4,
+      "failed_stages": {
+        "compute": 4
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "compute",
+          "error": "NameError: name 'data_path' is not defined",
+          "source_sha256": "af0b84257af23a6cb586042ee41656f1ada340bdb781c963f686c653aadb1052"
+        },
+        {
+          "stage": "compute",
+          "error": "TypeError: compute() missing 2 required positional arguments: 'data_path' and 'output_dir'",
+          "source_sha256": "81a593a18e140da9d9a82548eb059ff29d3105af5120bf1128312ddbbad15abd"
+        },
+        {
+          "stage": "compute",
+          "error": "NameError: name 'data_path' is not defined",
+          "source_sha256": "e8811e630a746b65eeb294b3630a1d52636614aebcb32c3e23b0d641d50a46ac"
+        },
+        {
+          "stage": "compute",
+          "error": "TypeError: compute() missing 1 required positional argument: 'data_path'",
+          "source_sha256": "701f8a1390a317796303bc1ced82440351da7c2bf08cb9d89ca693f366e6e024"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "run_python",
+          "kind": "type",
+          "summary": "Python program failed"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Known public set, not unseen generalization or a component ablation.",
+    "Stage receipts without independent verifier schema are not three-layer acceptance.",
+    "Process termination must be checked separately; completed rows alone do not prove exit."
+  ]
+}

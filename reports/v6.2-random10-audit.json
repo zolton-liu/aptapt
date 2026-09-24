@@ -1,0 +1,577 @@
+{
+  "experiment": "workflow-v6.2-contract-pipeline-random10-20260923-coder14b",
+  "complete": true,
+  "audit_consistent": true,
+  "missing_ids": [],
+  "checks": {
+    "expected_ids_unique": true,
+    "config_order_matches_task_list": true,
+    "result_ids_unique": true,
+    "result_order_matches_prefix": true,
+    "summary_n_tasks": true,
+    "summary_n_passed": true,
+    "starter_false_explicit": true,
+    "summary_rate": true,
+    "summary_duration": true,
+    "summary_input_tokens": true,
+    "summary_output_tokens": true,
+    "source_matches_config": true,
+    "runner_matches_config": true,
+    "snapshot_source_matches_config": true,
+    "snapshot_runner_matches_config": true
+  },
+  "completed_count": 10,
+  "passed_count": 1,
+  "strict_pass_at_1": 0.1,
+  "source_sha256": "f4594772af7b7bf31b2de732cf4e3f7aaeffd7ba8b39cfa0ba1c68cf97b2b86f",
+  "snapshot_source_sha256": "f4594772af7b7bf31b2de732cf4e3f7aaeffd7ba8b39cfa0ba1c68cf97b2b86f",
+  "total_duration_sec": 6420.409153,
+  "request_attempts_total": 131,
+  "responses_completed_total": 127,
+  "details": [
+    {
+      "task_id": "t1-geometric-mean-reverting-jd",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 0,
+        "errors": 34
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.512823,
+      "model_request_attempts": 14,
+      "model_responses_completed": 13,
+      "agent_message": "script execution still failing",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 4,
+      "failed_stages": {
+        "audit": 2,
+        "load_inputs": 2
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "audit",
+          "error": "ValueError: audit must return 1..64 named, Python-bool checks derived from actual inputs/results",
+          "source_sha256": "e829cb8ab30ff47b976a9e67cde2b0c48d0f38bfd8123c2e49bce9a1267ef028"
+        },
+        {
+          "stage": "audit",
+          "error": "ValueError: audit must return 1..64 named, Python-bool checks derived from actual inputs/results",
+          "source_sha256": "e829cb8ab30ff47b976a9e67cde2b0c48d0f38bfd8123c2e49bce9a1267ef028"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "ContractError: path does not exist: input/fred_rates.csv",
+          "source_sha256": "797eac26bbc1a241a99cd0748352424470ca6ba39576f8efd737f3462c110ce8"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "ContractError: path does not exist: input/fred_rates.csv",
+          "source_sha256": "7598cbaa69a405089beae31e51b36373e01c4a335cd8f96757074dacd8e16074"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {
+        "legacy_or_unrecorded": 2
+      },
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-earnings-surprise-calculator",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 8,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.514511,
+      "model_request_attempts": 18,
+      "model_responses_completed": 17,
+      "agent_message": "script execution still failing",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 5,
+      "failed_stages": {
+        "compute": 4,
+        "load_inputs": 1
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "compute",
+          "error": "TypeError: string indices must be integers, not 'str'",
+          "source_sha256": "dcabee04adec15d627d83d4194d2a7bf6c4fdb3861977c5e40565553291abcf8"
+        },
+        {
+          "stage": "compute",
+          "error": "AttributeError: 'str' object has no attribute 'get'",
+          "source_sha256": "b12e85a99f97a42dfbe8b149c524cf270d087e52dd8448337bafbc15b8e3bcc4"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/liuzhuo1qq.com/Documents/Codex/2026-09-12/https-www-agenthon-net-https-www/work/track1-coding-public-full/units/t1-earnings-surprise-calculator/scratch/earnings.json'",
+          "source_sha256": "4a64ef00788dfbf13c7bd82909183cf504632586086bfd27f5782e5a7751312d"
+        },
+        {
+          "stage": "compute",
+          "error": "AttributeError: 'str' object has no attribute 'get'",
+          "source_sha256": "0f92ca51b6b51ed425bc975e181a6b9fef2f57b8f359b1500b5e2bb941aa6365"
+        },
+        {
+          "stage": "compute",
+          "error": "AttributeError: 'str' object has no attribute 'get'",
+          "source_sha256": "0f92ca51b6b51ed425bc975e181a6b9fef2f57b8f359b1500b5e2bb941aa6365"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "updated lines in scratch/solve.py; controller auto-run failed, so repair the solver before another run"
+        },
+        {
+          "tool": "run_python",
+          "kind": "unknown",
+          "summary": "Python program failed"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-fama-french-factor-model-new",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 101,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 847.530769,
+      "model_request_attempts": 18,
+      "model_responses_completed": 18,
+      "agent_message": "script execution still failing",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "symbol",
+          "summary": "updated lines in scratch/solve.py; controller auto-run failed, so repair the solver before another run"
+        },
+        {
+          "tool": "run_python",
+          "kind": "symbol",
+          "summary": "Python program failed"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-implied-vol-approximations",
+      "reward": 0,
+      "checker": {
+        "passed": 9,
+        "failed": 1,
+        "errors": 0
+      },
+      "agent_exit_code": 0,
+      "checker_exit_code": 1,
+      "duration_sec": 242.174445,
+      "model_request_attempts": 5,
+      "model_responses_completed": 5,
+      "agent_message": "model finished and generic output checks passed",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "copy_file",
+          "kind": "unknown",
+          "summary": "WorkspaceError: copy_file requires a visible text source; binary tables are already profiled and must be loaded by a generated Python solver"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-localvol-barrier",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 7,
+        "errors": 32
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.025364,
+      "model_request_attempts": 17,
+      "model_responses_completed": 16,
+      "agent_message": "script execution still failing",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 2,
+      "failed_stages": {
+        "load_inputs": 2
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "load_inputs",
+          "error": "ContractError: path does not exist: input/scratch/task_rules.json",
+          "source_sha256": "2cd06a597b36ba6677a90ce8201ceb88545621bb503b85b3b4393365a1e9f5b2"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "ContractError: path does not exist: input/input/environment/data/task_rules.json",
+          "source_sha256": "8dfe077e30672aa79416918085c836a9aa64a71d0f5992ed5ddc648cd0a4e10a"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-pca-factor-portfolio",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 8,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 658.830414,
+      "model_request_attempts": 14,
+      "model_responses_completed": 14,
+      "agent_message": "stalled: repeated unchanged action after evidence replay; no further model calls",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 3,
+      "failed_stages": {
+        "audit": 1,
+        "load_inputs": 2
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "audit",
+          "error": "ValueError: audit must return 1..64 named, Python-bool checks derived from actual inputs/results",
+          "source_sha256": "0bd21a998a8bfeac03befbd3aabd46235d1a425ee2f03c9d155ce270ef249435"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/liuzhuo1qq.com/Documents/Codex/2026-09-12/https-www-agenthon-net-https-www/work/track1-coding-public-full/units/t1-pca-factor-portfolio/scratch/params.json'",
+          "source_sha256": "c7dba4211668f5f6e2c8a2bdf95b5163e602c48da99f2c23d3f262de64581c0f"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "UnboundLocalError: cannot access local variable 'input_path' where it is not associated with a value",
+          "source_sha256": "fa3ab1bfd1430af3a5f0aba4d0fa52d08d1e510ca79ffd27ce96543512548a7f"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {
+        "legacy_or_unrecorded": 1
+      },
+      "last_tool_failures": [
+        {
+          "tool": "run_python",
+          "kind": "type",
+          "summary": "Python program failed"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-dcc-garch-portfolio-var",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 63,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 204.217376,
+      "model_request_attempts": 6,
+      "model_responses_completed": 6,
+      "agent_message": "stalled: repeated unchanged action after evidence replay; no further model calls",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "solver edit blocked because it restores a previously executed source version"
+        },
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "solver edit blocked because it restores a previously executed source version"
+        },
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "solver edit blocked because it restores a previously executed source version"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-american-option-fd-new",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 54,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.286814,
+      "model_request_attempts": 14,
+      "model_responses_completed": 13,
+      "agent_message": "script execution still failing",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-variance-swap-replication",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 17,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 558.533809,
+      "model_request_attempts": 16,
+      "model_responses_completed": 16,
+      "agent_message": "stalled: repeated unchanged action after evidence replay; no further model calls",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "run_python",
+          "kind": "syntax",
+          "summary": "Python program failed"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-asian-option-levy-curran",
+      "reward": 1,
+      "checker": {
+        "passed": 25,
+        "failed": 0,
+        "errors": 0
+      },
+      "agent_exit_code": 0,
+      "checker_exit_code": 0,
+      "duration_sec": 327.782828,
+      "model_request_attempts": 9,
+      "model_responses_completed": 9,
+      "agent_message": "model finished and generic output checks passed",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "run_python",
+          "kind": "symbol",
+          "summary": "Python program failed"
+        },
+        {
+          "tool": "replace_text",
+          "kind": "path",
+          "summary": "updated scratch/solve.py; controller auto-run failed, so repair the solver before another run"
+        },
+        {
+          "tool": "run_python",
+          "kind": "path",
+          "summary": "Python program failed"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Known public set, not unseen generalization or a component ablation.",
+    "Stage receipts without independent verifier schema are not three-layer acceptance.",
+    "Process termination must be checked separately; completed rows alone do not prove exit."
+  ]
+}

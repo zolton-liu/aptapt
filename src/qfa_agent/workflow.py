@@ -43,12 +43,14 @@ def classify_failure(outcome: ToolOutcome) -> str:
         return "path"
     if any(token in text for token in ("keyerror", "usecols", "column", "schema", "header")):
         return "schema"
+    if any(token in text for token in ("alignment mismatch", "could not be broadcast", "shapes (")):
+        return "alignment"
+    if any(token in text for token in ("nan", "non-finite", "infinite", "overflow", "singular", "converge")):
+        return "numeric"
     if any(token in text for token in ("typeerror", "valueerror", "dtype", "could not convert")):
         return "type"
     if any(token in text for token in ("assertionerror", "assert ", "self-authored tests failed")):
         return "invariant"
-    if any(token in text for token in ("nan", "infinite", "overflow", "singular", "converge")):
-        return "numeric"
     if any(token in text for token in ("memoryerror", "resource", "killed")):
         return "resource"
     if "protocolerror" in text or "json tool action" in text:
@@ -86,6 +88,7 @@ class WorkflowState:
     last_failure_signature: str = ""
     repeated_failure_count: int = 0
     tests_failed: bool = False
+    executions_failed: bool = False
 
 
 class WorkflowController:
@@ -95,6 +98,8 @@ class WorkflowController:
         self.strategy = strategy
         self.state = WorkflowState()
         self._test_suites: dict[tuple[str, ...], bool] = {}
+        self._executions: dict[str, bool] = {}
+        self._stage_evidence: dict = {}
 
     def guard(self, action: Action) -> ToolOutcome | None:
         """Reject only unsafe transitions; guidance handles softer preferences."""
@@ -102,6 +107,9 @@ class WorkflowController:
         if action.tool == "finish" and self.state.tests_failed:
             return ToolOutcome(False, "workflow risk gate blocked finish: self-authored tests still failing",
                                {"required_next_step": "Repair the implementation and rerun the original tests. File validation does not prove numerical correctness."})
+        if action.tool == "finish" and self.state.executions_failed:
+            return ToolOutcome(False, "workflow risk gate blocked finish: execution still failing",
+                               {"required_next_step": "Repair and rerun the failed script. Partial files left by a failed run do not prove successful execution."})
         if action.tool == "finish" and not self.state.validation_passed:
             return ToolOutcome(
                 False,
@@ -121,6 +129,8 @@ class WorkflowController:
         if action.tool in _MUTATION_TOOLS:
             if outcome.mutated:
                 state.validation_passed = False
+                if self._stage_evidence:
+                    self._stage_evidence = {**self._stage_evidence, 'stale': True, 'complete': False}
                 if self._test_suites:
                     self._test_suites = dict.fromkeys(self._test_suites, False)
                     state.tests_failed = True
@@ -133,6 +143,14 @@ class WorkflowController:
                 self._record_failure(outcome)
         elif action.tool == "run_python":
             state.validation_passed = False
+            # Missing paths and blocked requests never executed a script.
+            # They must not create an impossible execution-recovery gate.
+            if 'returncode' in outcome.data:
+                self._executions[str(action.arguments.get("script", ""))] = outcome.ok
+                state.executions_failed = not all(self._executions.values())
+                if isinstance(outcome.data.get('stage_evidence'), dict):
+                    from .context import focused_preview
+                    self._stage_evidence = focused_preview('stage_evidence', outcome.data['stage_evidence'])
             if outcome.ok:
                 state.successful_runs += 1
                 state.phase = "audit"
@@ -151,7 +169,7 @@ class WorkflowController:
                 self._record_failure(outcome)
         elif action.tool == "validate_outputs":
             state.validation_passed = outcome.ok
-            if outcome.ok and state.tests_failed:
+            if outcome.ok and (state.tests_failed or state.executions_failed):
                 state.phase = "repair"
                 state.last_failure_kind = "invariant"
             elif outcome.ok:
@@ -193,6 +211,7 @@ class WorkflowController:
                 "path": "Resolve the path from TASK_DIR/OUTPUT_DIR and the supplied inventory.",
                 "schema": "Align names and types to the bounded input profile and required output contract.",
                 "type": "Normalize dtypes/units at the boundary, then rerun the same focused case.",
+                "alignment": "Align by the task's date/entity keys before converting to arrays; check identical indexes and never truncate arrays to hide a mismatch.",
                 "invariant": "Fix the financial identity that failed; do not weaken the self-test.",
                 "numeric": "Add stable edge handling, finite checks, and a bracketed or regularized method.",
                 "timeout": "Reduce algorithmic cost and data copies before rerunning.",
@@ -203,7 +222,10 @@ class WorkflowController:
                     " The same failure recurred: inspect the current scratch source and rewrite the "
                     "smallest faulty function instead of repeating the same patch or run."
                 )
-            return f"Repairer ({state.last_failure_kind}): {guidance}"
+            failed_stage = next((s.get('name') for s in self._stage_evidence.get('stages', [])
+                                 if s.get('status') == 'failed'), None)
+            stage_hint = f' Failed stage: {failed_stage}; repair that function and rerun all stages.' if failed_stage else ''
+            return f"Repairer ({state.last_failure_kind}): {guidance}{stage_hint}"
         if state.phase == "audit":
             checks = "; ".join(self.strategy.invariants)
             return (
@@ -223,7 +245,10 @@ class WorkflowController:
             "last_failure_kind": state.last_failure_kind,
             "repeated_failure_count": state.repeated_failure_count,
             "tests_failed": state.tests_failed,
+            "executions_failed": state.executions_failed,
+            "pending_scripts": [path for path, passed in self._executions.items() if not passed],
             "pending_test_suites": [list(paths) for paths, passed in self._test_suites.items() if not passed],
+            "solver_stages": self._stage_evidence,
         }
 
     def as_prompt(self) -> str:

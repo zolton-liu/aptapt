@@ -1,0 +1,459 @@
+{
+  "context_stress": {
+    "scope": "synthetic context stress fixture; not pass@1 or provider-billed tokens",
+    "baseline_estimated_input_tokens": 57352,
+    "new_estimated_input_tokens": 2173,
+    "estimated_reduction_percent": 96.21,
+    "deduplicated_active_failures": 1,
+    "repeated_failure_count": 3,
+    "instruction_preserved": true,
+    "estimated_input_tokens": 2173,
+    "estimated_original_tokens": 1315,
+    "max_input_tokens": 16000,
+    "retained_history_messages": 6,
+    "dropped_history_messages": 0,
+    "offloaded_observations": 3
+  },
+  "initial_context_preflight": {
+    "n_tasks": 87,
+    "n_fit": 87,
+    "max_estimated_tokens": 11142,
+    "rows": [
+      {
+        "task_id": "t1-13f-amendment-aware-crowding",
+        "fits": true,
+        "estimated_tokens": 6071
+      },
+      {
+        "task_id": "t1-EXAMPLE-bs-greeks-pde",
+        "fits": true,
+        "estimated_tokens": 4915
+      },
+      {
+        "task_id": "t1-alpha-hedge-strategy",
+        "fits": true,
+        "estimated_tokens": 5898
+      },
+      {
+        "task_id": "t1-american-option-fd-new",
+        "fits": true,
+        "estimated_tokens": 5341
+      },
+      {
+        "task_id": "t1-asian-option-levy-curran",
+        "fits": true,
+        "estimated_tokens": 5372
+      },
+      {
+        "task_id": "t1-barone-adesi-whaley",
+        "fits": true,
+        "estimated_tokens": 5546
+      },
+      {
+        "task_id": "t1-barrier-garch-var",
+        "fits": true,
+        "estimated_tokens": 4749
+      },
+      {
+        "task_id": "t1-binance-btc-participation-tca",
+        "fits": true,
+        "estimated_tokens": 6152
+      },
+      {
+        "task_id": "t1-bl-regime-hmm",
+        "fits": true,
+        "estimated_tokens": 5654
+      },
+      {
+        "task_id": "t1-bollinger-backtest-aapl",
+        "fits": true,
+        "estimated_tokens": 6295
+      },
+      {
+        "task_id": "t1-brinson-sector-attribution",
+        "fits": true,
+        "estimated_tokens": 5437
+      },
+      {
+        "task_id": "t1-bs-greeks-pde",
+        "fits": true,
+        "estimated_tokens": 5364
+      },
+      {
+        "task_id": "t1-cir-bond-pricing",
+        "fits": true,
+        "estimated_tokens": 6232
+      },
+      {
+        "task_id": "t1-cliquet-ratchet-pricing",
+        "fits": true,
+        "estimated_tokens": 5018
+      },
+      {
+        "task_id": "t1-cme-hdd-option-pricing",
+        "fits": true,
+        "estimated_tokens": 5300
+      },
+      {
+        "task_id": "t1-compound-option-geske",
+        "fits": true,
+        "estimated_tokens": 5651
+      },
+      {
+        "task_id": "t1-copula-equity-fitting",
+        "fits": true,
+        "estimated_tokens": 4352
+      },
+      {
+        "task_id": "t1-copula-sampling-rank-correlation",
+        "fits": true,
+        "estimated_tokens": 4564
+      },
+      {
+        "task_id": "t1-corporate-action-adjustment",
+        "fits": true,
+        "estimated_tokens": 4241
+      },
+      {
+        "task_id": "t1-credit-migration-matrix",
+        "fits": true,
+        "estimated_tokens": 9179
+      },
+      {
+        "task_id": "t1-credit-portfolio-var-cvar",
+        "fits": true,
+        "estimated_tokens": 9147
+      },
+      {
+        "task_id": "t1-credit-spread-decomposition",
+        "fits": true,
+        "estimated_tokens": 6138
+      },
+      {
+        "task_id": "t1-creditmetrics-portfolio-var",
+        "fits": true,
+        "estimated_tokens": 4825
+      },
+      {
+        "task_id": "t1-cross-sectional-momentum",
+        "fits": true,
+        "estimated_tokens": 4441
+      },
+      {
+        "task_id": "t1-crypto-funding-rate-basis-carry",
+        "fits": true,
+        "estimated_tokens": 7307
+      },
+      {
+        "task_id": "t1-cta-basel-capital",
+        "fits": true,
+        "estimated_tokens": 5577
+      },
+      {
+        "task_id": "t1-dcc-garch-portfolio-var",
+        "fits": true,
+        "estimated_tokens": 6229
+      },
+      {
+        "task_id": "t1-delta-hedging-pnl-simulation",
+        "fits": true,
+        "estimated_tokens": 5571
+      },
+      {
+        "task_id": "t1-digital-barrier-options",
+        "fits": true,
+        "estimated_tokens": 4806
+      },
+      {
+        "task_id": "t1-double-sort",
+        "fits": true,
+        "estimated_tokens": 4088
+      },
+      {
+        "task_id": "t1-dupire-local-vol",
+        "fits": true,
+        "estimated_tokens": 5638
+      },
+      {
+        "task_id": "t1-earnings-surprise-calculator",
+        "fits": true,
+        "estimated_tokens": 4201
+      },
+      {
+        "task_id": "t1-etf-cross-asset-lead-lag",
+        "fits": true,
+        "estimated_tokens": 7061
+      },
+      {
+        "task_id": "t1-etf-overlap-redemption-pressure",
+        "fits": true,
+        "estimated_tokens": 6981
+      },
+      {
+        "task_id": "t1-event-study-earnings",
+        "fits": true,
+        "estimated_tokens": 5358
+      },
+      {
+        "task_id": "t1-evt-pot-var",
+        "fits": true,
+        "estimated_tokens": 4685
+      },
+      {
+        "task_id": "t1-ewma-portfolio-risk-decomposition",
+        "fits": true,
+        "estimated_tokens": 4791
+      },
+      {
+        "task_id": "t1-fama-french-factor-model-new",
+        "fits": true,
+        "estimated_tokens": 7781
+      },
+      {
+        "task_id": "t1-fft-compound-poisson",
+        "fits": true,
+        "estimated_tokens": 4325
+      },
+      {
+        "task_id": "t1-first-passage-time",
+        "fits": true,
+        "estimated_tokens": 5322
+      },
+      {
+        "task_id": "t1-fomc-tone-event-study",
+        "fits": true,
+        "estimated_tokens": 7444
+      },
+      {
+        "task_id": "t1-form4-cross-sectional-sale-pressure",
+        "fits": true,
+        "estimated_tokens": 5730
+      },
+      {
+        "task_id": "t1-fx-carry-forward-hedge",
+        "fits": true,
+        "estimated_tokens": 11142
+      },
+      {
+        "task_id": "t1-fx-forward-cross-rate",
+        "fits": true,
+        "estimated_tokens": 5339
+      },
+      {
+        "task_id": "t1-geometric-mean-reverting-jd",
+        "fits": true,
+        "estimated_tokens": 5144
+      },
+      {
+        "task_id": "t1-historical-var-data-prep",
+        "fits": true,
+        "estimated_tokens": 5226
+      },
+      {
+        "task_id": "t1-hull-white-swaption",
+        "fits": true,
+        "estimated_tokens": 7217
+      },
+      {
+        "task_id": "t1-implied-vol-approximations",
+        "fits": true,
+        "estimated_tokens": 5180
+      },
+      {
+        "task_id": "t1-interest-rate-cap-floor",
+        "fits": true,
+        "estimated_tokens": 4097
+      },
+      {
+        "task_id": "t1-intraday-volume-fitting-and-execution-scheduling",
+        "fits": true,
+        "estimated_tokens": 6609
+      },
+      {
+        "task_id": "t1-ipca-latent-factors",
+        "fits": true,
+        "estimated_tokens": 6562
+      },
+      {
+        "task_id": "t1-kelly-var-sizing",
+        "fits": true,
+        "estimated_tokens": 4458
+      },
+      {
+        "task_id": "t1-lob-pc-signal",
+        "fits": true,
+        "estimated_tokens": 7283
+      },
+      {
+        "task_id": "t1-localvol-barrier",
+        "fits": true,
+        "estimated_tokens": 8363
+      },
+      {
+        "task_id": "t1-lookback-options",
+        "fits": true,
+        "estimated_tokens": 6130
+      },
+      {
+        "task_id": "t1-mc-greek-surface-1",
+        "fits": true,
+        "estimated_tokens": 7163
+      },
+      {
+        "task_id": "t1-merton-jump-diffusion",
+        "fits": true,
+        "estimated_tokens": 5160
+      },
+      {
+        "task_id": "t1-momentum-backtest",
+        "fits": true,
+        "estimated_tokens": 5147
+      },
+      {
+        "task_id": "t1-mtm-xccy-basis-desk",
+        "fits": true,
+        "estimated_tokens": 8205
+      },
+      {
+        "task_id": "t1-multimodal-alpha-fusion-edgar-cot-gdelt",
+        "fits": true,
+        "estimated_tokens": 10452
+      },
+      {
+        "task_id": "t1-ohlc-realized-vol-estimators",
+        "fits": true,
+        "estimated_tokens": 5259
+      },
+      {
+        "task_id": "t1-option-put-call-parity-forward-audit",
+        "fits": true,
+        "estimated_tokens": 5567
+      },
+      {
+        "task_id": "t1-ou-jump-commodity",
+        "fits": true,
+        "estimated_tokens": 4934
+      },
+      {
+        "task_id": "t1-pca-factor-portfolio",
+        "fits": true,
+        "estimated_tokens": 4235
+      },
+      {
+        "task_id": "t1-polars-api-migration",
+        "fits": true,
+        "estimated_tokens": 4196
+      },
+      {
+        "task_id": "t1-prediction-markets-cross-venue-dislocation",
+        "fits": true,
+        "estimated_tokens": 8807
+      },
+      {
+        "task_id": "t1-realized-vol-estimators",
+        "fits": true,
+        "estimated_tokens": 5061
+      },
+      {
+        "task_id": "t1-regime-cta-vol-target",
+        "fits": true,
+        "estimated_tokens": 5496
+      },
+      {
+        "task_id": "t1-regime-riskparity-cvar",
+        "fits": true,
+        "estimated_tokens": 5421
+      },
+      {
+        "task_id": "t1-residual-momentum",
+        "fits": true,
+        "estimated_tokens": 4592
+      },
+      {
+        "task_id": "t1-sec-10k-report-long",
+        "fits": true,
+        "estimated_tokens": 6843
+      },
+      {
+        "task_id": "t1-sec-8k-event-alpha",
+        "fits": true,
+        "estimated_tokens": 5045
+      },
+      {
+        "task_id": "t1-sentiment-factor-alpha",
+        "fits": true,
+        "estimated_tokens": 6006
+      },
+      {
+        "task_id": "t1-sma-crossover-spy",
+        "fits": true,
+        "estimated_tokens": 5128
+      },
+      {
+        "task_id": "t1-smith-tail-index",
+        "fits": true,
+        "estimated_tokens": 4310
+      },
+      {
+        "task_id": "t1-spread-option-kirk-margrabe",
+        "fits": true,
+        "estimated_tokens": 5094
+      },
+      {
+        "task_id": "t1-stable-residual",
+        "fits": true,
+        "estimated_tokens": 8284
+      },
+      {
+        "task_id": "t1-standard-var-methods",
+        "fits": true,
+        "estimated_tokens": 4566
+      },
+      {
+        "task_id": "t1-stochvol-implied-surface-new",
+        "fits": true,
+        "estimated_tokens": 6206
+      },
+      {
+        "task_id": "t1-structured-note-risk",
+        "fits": true,
+        "estimated_tokens": 4737
+      },
+      {
+        "task_id": "t1-swap-curve-bootstrap-ois",
+        "fits": true,
+        "estimated_tokens": 6746
+      },
+      {
+        "task_id": "t1-var-es-estimation",
+        "fits": true,
+        "estimated_tokens": 4770
+      },
+      {
+        "task_id": "t1-variance-swap-replication",
+        "fits": true,
+        "estimated_tokens": 5597
+      },
+      {
+        "task_id": "t1-yield-curve-bond-immunization",
+        "fits": true,
+        "estimated_tokens": 9154
+      },
+      {
+        "task_id": "t1-yield-curve-bootstrap-immunization",
+        "fits": true,
+        "estimated_tokens": 6524
+      },
+      {
+        "task_id": "t1-yield-curve-pca-dynamics",
+        "fits": true,
+        "estimated_tokens": 5126
+      },
+      {
+        "task_id": "t1-zero-coupon-bootstrapping",
+        "fits": true,
+        "estimated_tokens": 4525
+      }
+    ]
+  }
+}

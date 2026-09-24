@@ -43,6 +43,22 @@ def paged_evidence(value):
     return value
 
 
+def focused_preview(key: str, value: dict) -> dict:
+    """Keep new structured evidence bounded as well as ordinary log strings."""
+    if key == 'repair_context':
+        kept = {k: value[k] for k in ('location_verified', 'path', 'line', 'source_sha256',
+                                     'expression', 'related_symbols', 'visible_path_candidates') if k in value}
+        for k, limit in [('source_context', 1600), ('library_tail', 500), ('note', 200)]:
+            if k in value:
+                kept[k] = bounded_text(str(value[k]), limit)
+        return kept
+    return {k: value[k] for k in ('mode', 'complete', 'source_sha256', 'audit_scope') if k in value} | {
+        'stages': [{k: item[k] for k in ('name', 'status') if k in item} | {
+            'error': bounded_text(str(item.get('error', '')), 300),
+            'failed_checks': [name for name, passed in item.get('checks', {}).items() if not passed][:4],
+        } for item in value.get('stages', [])[:4]]}
+
+
 class ContextManager:
     def __init__(self, workspace: TaskWorkspace, *, max_tokens: int = 16000,
                  observation_chars: int = 6000):
@@ -78,6 +94,27 @@ class ContextManager:
             'error', 'source_context', 'required_next_step', 'issues', 'output',
             'content', 'controller_auto_run', 'controller_post_run_validation'
         ) if key in data}
+        for key in ('repair_context', 'stage_evidence'):
+            if isinstance(data.get(key), dict):
+                preview[key] = focused_preview(key, data[key])
+        if 'repair_context' in preview:
+            preview.pop('source_context', None)
+        # Nested controller executions put their actionable traceback after
+        # large manifests. Do not flatten/truncate that whole object as text.
+        nested = data.get('controller_auto_run')
+        if isinstance(nested, dict):
+            nested_data = nested.get('data', {})
+            preview['controller_auto_run'] = {
+                'ok': nested.get('ok'), 'summary': nested.get('summary', '')[:300],
+                **{key: bounded_text(str(nested_data[key]), 1000)
+                   for key in ('output', 'source_context', 'required_next_step')
+                   if key in nested_data},
+            }
+            for key in ('repair_context', 'stage_evidence'):
+                if isinstance(nested_data.get(key), dict):
+                    preview['controller_auto_run'][key] = focused_preview(key, nested_data[key])
+            if 'repair_context' in preview['controller_auto_run']:
+                preview['controller_auto_run'].pop('source_context', None)
         compact = {
             'type': 'tool_observation', 'ok': outcome.ok, 'mutated': outcome.mutated,
             'summary': json.loads(encoded)['summary'][:500], 'data_preview': preview,
@@ -98,6 +135,7 @@ class ContextManager:
             reduced.pop('recent_actions', None)
             reduced.pop('facts', None)
             reduced.pop('resolved_failures', None)
+            reduced.pop('historical_failures', None)
             state = {'role': 'user', 'content': json.dumps(
                 {'type': 'controller_checkpoint', **reduced}, ensure_ascii=False)}
             base = [*pinned, state]
@@ -112,7 +150,9 @@ class ContextManager:
                 groups.append([])
             groups[-1].append(message)
         selected: list[Message] = []
-        for group in reversed(groups):
+        # A repair checkpoint plus three recent pairs is enough to retain
+        # immediate evidence; a large token ceiling is not a target to fill.
+        for group in reversed(groups[-3:]):
             if estimate_tokens([*base, *group, *selected]) > self.max_tokens:
                 break
             selected = [*group, *selected]

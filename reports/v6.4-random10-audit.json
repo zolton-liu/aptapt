@@ -1,0 +1,822 @@
+{
+  "experiment": "workflow-v6.4-evidence-adapter-random10-20260924-coder14b",
+  "complete": true,
+  "audit_consistent": true,
+  "missing_ids": [],
+  "checks": {
+    "expected_ids_unique": true,
+    "config_order_matches_task_list": true,
+    "result_ids_unique": true,
+    "result_order_matches_prefix": true,
+    "summary_n_tasks": true,
+    "summary_n_passed": true,
+    "starter_false_explicit": true,
+    "summary_rate": true,
+    "summary_duration": true,
+    "summary_input_tokens": true,
+    "summary_output_tokens": true,
+    "source_matches_config": true,
+    "runner_matches_config": true,
+    "snapshot_source_matches_config": true,
+    "snapshot_runner_matches_config": true,
+    "input_manifest_matches_config": true,
+    "input_snapshot_unchanged": true
+  },
+  "completed_count": 10,
+  "passed_count": 0,
+  "strict_pass_at_1": 0.0,
+  "source_sha256": "a4798b856bb83e6d01ce587ef5e46e14d6e280726ea15f7c87eba731c1322831",
+  "snapshot_source_sha256": "a4798b856bb83e6d01ce587ef5e46e14d6e280726ea15f7c87eba731c1322831",
+  "input_provenance": "snapshot_recorded",
+  "total_duration_sec": 6703.889695999999,
+  "request_attempts_total": 109,
+  "responses_completed_total": 106,
+  "details": [
+    {
+      "task_id": "t1-geometric-mean-reverting-jd",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 0,
+        "errors": 34
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 768.665259,
+      "model_request_attempts": 10,
+      "model_responses_completed": 10,
+      "agent_message": "stalled: repeated unchanged action after evidence replay; no further model calls",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 3,
+      "failed_stages": {
+        "compute": 3
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "compute",
+          "error": "IndexError: index 5 is out of bounds for axis 1 with size 5",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 41,
+            "source_context": "40: \n41: def compute(inputs):\n42:     rates_df = inputs[\"rates_df\"]\n43:     n_obs = inputs[\"n_obs\"]\n44:     rate_mean = inputs[\"rate_mean\"]\n45:     rate_std = inputs[\"rate_std\"]\n46:     log_rate_mean = inputs[\"log_rate_mean\"]",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "dae65fc0f61a9f2dd215e86165dad3ccb3f44978341090cca2faca772ee7551b"
+        },
+        {
+          "stage": "compute",
+          "error": "IndexError: index 5 is out of bounds for axis 1 with size 5",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 41,
+            "source_context": "40: \n41: def compute(inputs):\n42:     rates_df = inputs[\"rates_df\"]\n43:     n_obs = inputs[\"n_obs\"]\n44:     rate_mean = inputs[\"rate_mean\"]\n45:     rate_std = inputs[\"rate_std\"]\n46:     log_rate_mean = inputs[\"log_rate_mean\"]",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "dae65fc0f61a9f2dd215e86165dad3ccb3f44978341090cca2faca772ee7551b"
+        },
+        {
+          "stage": "compute",
+          "error": "IndexError: index 5 is out of bounds for axis 1 with size 5",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 41,
+            "source_context": "40: \n41: def compute(inputs):\n42:     rates_df = inputs[\"rates_df\"]\n43:     n_obs = inputs[\"n_obs\"]\n44:     rate_mean = inputs[\"rate_mean\"]\n45:     rate_std = inputs[\"rate_std\"]\n46:     log_rate_mean = inputs[\"log_rate_mean\"]",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "924ea3b30ac78307adb7bd3d0960ab43b1c672f5d7a4c502a376aa0c60f1a131"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "updated lines in scratch/solve.py; controller auto-run failed, so repair the solver before another run"
+        },
+        {
+          "tool": "run_python",
+          "kind": "unknown",
+          "summary": "Python program failed"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-earnings-surprise-calculator",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 8,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 318.553001,
+      "model_request_attempts": 6,
+      "model_responses_completed": 6,
+      "agent_message": "stalled: repeated unchanged action after evidence replay; no further model calls",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 1,
+      "failed_stages": {
+        "load_inputs": 1
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "load_inputs",
+          "error": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/liuzhuo1qq.com/Documents/Codex/2026-09-12/https-www-agenthon-net-https-www/eval_runs/workflow-v6.4-evidence-adapter-random10-20260924-coder14b/input-snapshot/units/t1-earnings-surprise-calculator/scratch/earnings.json'",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 33,
+            "source_context": "32: \n33: def load_inputs():\n34:     task_dir = Path(os.environ[\"TASK_DIR\"])\n35:     with open(task_dir / \"scratch/earnings.json\", \"r\") as f:\n36:         data = json.load(f)\n37:     return {\"earnings\": data}\n38: ",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "1e335216d87c8e468f5e44df9eccb8896d6f9136e42b016aa84030f6d646cffe"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-fama-french-factor-model-new",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 101,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.509563,
+      "model_request_attempts": 11,
+      "model_responses_completed": 10,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "run_python",
+          "kind": "type",
+          "summary": "Python program failed"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-implied-vol-approximations",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 10,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.283283,
+      "model_request_attempts": 12,
+      "model_responses_completed": 11,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 3,
+      "failed_stages": {
+        "load_inputs": 1,
+        "audit": 1,
+        "compute": 1
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "load_inputs",
+          "error": "ValueError: load_inputs must return a non-empty mapping of checked inputs",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 63,
+            "source_context": "62: \n63: def load_inputs():\n64:     return {}\n65: \n66: def compute(inputs):\n67:     results = []\n68:     all_newton_converged = True",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "aa237d218c61e6499f6cc124faa5270391f8e329c18c1b3968f4421cc19ca47a"
+        },
+        {
+          "stage": "audit",
+          "error": "ValueError: audit check names must be unique",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 228,
+            "source_context": "227: \n228: def audit(inputs, result):\n229:     results = result[\"results\"]\n230:     summary = result[\"summary\"]\n231:     \n232:     # Structure check\n233:     structure(results, {",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "50e91c834707bcb96d20224cfec565eba7a665323721a59560aac8766e76fa56"
+        },
+        {
+          "stage": "compute",
+          "error": "AttributeError: 'int' object has no attribute 'strip'",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 66,
+            "source_context": "65: \n66: def compute(inputs):\n67:     results = []\n68:     all_newton_converged = True\n69:     n_atm_points = 0\n70:     rmse_bs_atm = 0.0\n71:     rmse_li_atm = 0.0",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "c01b3989926f5d79d626f2947edb82212d699e5dc670619f280749d3a731eb26"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {
+        "legacy_or_unrecorded": 1
+      },
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "WorkspaceError: line range must satisfy 1 <= start <= end <= 342"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-localvol-barrier",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 7,
+        "errors": 32
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 715.780676,
+      "model_request_attempts": 18,
+      "model_responses_completed": 18,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 7,
+      "failed_stages": {
+        "audit": 6,
+        "compute": 1
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "audit",
+          "error": "ValueError: staged solver requires function audit",
+          "callable_location": null,
+          "source_sha256": "ed03f2e27a28282195a649933af51b5022b05e8e951c772614680acc38fa169a"
+        },
+        {
+          "stage": "audit",
+          "error": "ValueError: staged solver requires function audit",
+          "callable_location": null,
+          "source_sha256": "d84fc0382f386ea22f02ae6f042d7fdd0265671e789c096d6035300c00d77a26"
+        },
+        {
+          "stage": "audit",
+          "error": "TypeError: AuditReport.__init__() takes 2 positional arguments but 4 were given",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 103,
+            "source_context": "102: \n103: def audit(inputs, result):\n104:     from qfa_agent.verification import AuditReport, structure, computation\n105:     return AuditReport([], [], [])\n106: def write_outputs(result):\n107:     # Implement the output writing here\n108:     pass",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "2fe1d06fff0d6da9dda7acfbf967e0dc6ac766133ec8e9f22d9ec94db694db79"
+        },
+        {
+          "stage": "audit",
+          "error": "TypeError: AuditReport.__init__() takes 2 positional arguments but 4 were given",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 103,
+            "source_context": "102: \n103: def audit(inputs, result):\n104:     from qfa_agent.verification import AuditReport, structure, computation\n105:     return AuditReport([], [], [])\n106: \n107: def write_outputs(result):\n108:     # Implement the output writing here",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "00c8af27df82721c25f6d2087e53c6eb26f00cdc2ecf086a55c8efc0fbe2038c"
+        },
+        {
+          "stage": "audit",
+          "error": "ValueError: three-layer-v1 requires AuditReport, not self-declared bool checks",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 103,
+            "source_context": "102: \n103: def audit(inputs, result):\n104:     # Implement the audit checks here\n105:     pass\n106: \n107: def write_outputs(result):\n108:     # Implement the output writing here",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "3bd14ebdb3296fcc869d2d2d4aab756d72701fe2321585ce207fed4440502be4"
+        },
+        {
+          "stage": "audit",
+          "error": "TypeError: AuditReport.__init__() takes 2 positional arguments but 4 were given",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 103,
+            "source_context": "102: \n103: def audit(inputs, result):\n104:     from qfa_agent.verification import AuditReport, structure, computation\n105:     return AuditReport([], [], [])\n106:     # Implement the output writing here\n107:     pass",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "4226969cfdf955a703f6181590e8b0850f9196bd8b8ff5ead477c8498f312bee"
+        },
+        {
+          "stage": "compute",
+          "error": "ValueError: compute must return a non-empty mapping of results; do not write final outputs here",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 99,
+            "source_context": "98: \n99: def compute(inputs):\n100:     # Implement the full pipeline here\n101:     pass\n102: \n103: def audit(inputs, result):\n104:     # Implement the audit checks here",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "6c0cdbec6c54b3ec90cddf4a7d4a3ea3fd52da406913b343092fc9da94c0e06b"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {
+        "legacy_or_unrecorded": 6
+      },
+      "last_tool_failures": [
+        {
+          "tool": "run_python",
+          "kind": "type",
+          "summary": "Python program failed"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "type",
+          "summary": "updated lines in scratch/solve.py; controller auto-run failed, so repair the solver before another run"
+        },
+        {
+          "tool": "run_python",
+          "kind": "type",
+          "summary": "Python program failed"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-pca-factor-portfolio",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 8,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 895.513804,
+      "model_request_attempts": 13,
+      "model_responses_completed": 12,
+      "agent_message": "three-layer verification gate blocked finish",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 5,
+      "failed_stages": {
+        "load_inputs": 5
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "load_inputs",
+          "error": "ValueError: Length of values (120) does not match length of index (8)",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 29,
+            "source_context": "28: \n29: def load_inputs():\n30:     params_path = input_path(\"environment/data/params.json\")\n31:     with open(params_path, 'r') as f:\n32:         params = json.load(f)\n33:     tickers = params['tickers']\n34:     monthly_returns = params['monthly_returns']",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "c6b803f8f514c4afa43a8b1878746a3439999a8089d67a06d8f1dd4c7c8ce658"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "ContractError: table columns invalid: missing=['SPY', 'QQQ', 'IWM', 'EFA', 'EEM', 'TLT', 'GLD', 'VNQ'], unique=True",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 29,
+            "source_context": "28: \n29: def load_inputs():\n30:     params_path = input_path(\"environment/data/params.json\")\n31:     with open(params_path, 'r') as f:\n32:         params = json.load(f)\n33:     tickers = params['tickers']\n34:     monthly_returns = params['monthly_returns']",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "5d81b4c080840c2b65632a5e589a2a9cc0b564a66b6c56d431bb3d820d22314e"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "ValueError: Length of values (120) does not match length of index (8)",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 29,
+            "source_context": "28: \n29: def load_inputs():\n30:     params_path = input_path(\"environment/data/params.json\")\n31:     with open(params_path, 'r') as f:\n32:         params = json.load(f)\n33:     tickers = params['tickers']\n34:     monthly_returns = params['monthly_returns']",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "c6b803f8f514c4afa43a8b1878746a3439999a8089d67a06d8f1dd4c7c8ce658"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "ContractError: table columns invalid: missing=['SPY', 'QQQ', 'IWM', 'EFA', 'EEM', 'TLT', 'GLD', 'VNQ'], unique=True",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 29,
+            "source_context": "28: \n29: def load_inputs():\n30:     params_path = input_path(\"environment/data/params.json\")\n31:     with open(params_path, 'r') as f:\n32:         params = json.load(f)\n33:     tickers = params['tickers']\n34:     monthly_returns = params['monthly_returns']",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "dfd841f45406db3ec5ebc0858c24c7ad05f7b23fae9a3454be59418679c42a8e"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "ValueError: Length of values (120) does not match length of index (8)",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 28,
+            "source_context": "27: \n28: def load_inputs():\n29:     params_path = input_path(\"environment/data/params.json\")\n30:     with open(params_path, 'r') as f:\n31:         params = json.load(f)\n32:     tickers = params['tickers']\n33:     monthly_returns = params['monthly_returns']",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "6b81627cdc8a8476c21280e04812bc8c3eabfee04dd1867a570a9031f3bfe254"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "schema",
+          "summary": "updated lines in scratch/solve.py; controller auto-run failed, so repair the solver before another run"
+        },
+        {
+          "tool": "run_python",
+          "kind": "schema",
+          "summary": "Python program failed"
+        },
+        {
+          "tool": "model_retry",
+          "kind": null,
+          "summary": "transient model call failed: ModelError"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-dcc-garch-portfolio-var",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 63,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 282.032783,
+      "model_request_attempts": 9,
+      "model_responses_completed": 9,
+      "agent_message": "stalled: repeated unchanged action after evidence replay; no further model calls",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 0,
+      "failed_stages": {},
+      "completed_stage_runs": 0,
+      "stage_errors": [],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "revise_method",
+          "kind": "timeout",
+          "summary": "unchanged method hypothesis already recorded; implement or gather new evidence"
+        },
+        {
+          "tool": "run_python",
+          "kind": "timeout",
+          "summary": "unchanged solve.py already failed; rerunning it cannot make progress"
+        },
+        {
+          "tool": "revise_method",
+          "kind": "timeout",
+          "summary": "unchanged method hypothesis already recorded; implement or gather new evidence"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-american-option-fd-new",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 54,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 730.433823,
+      "model_request_attempts": 9,
+      "model_responses_completed": 9,
+      "agent_message": "stalled: repeated unchanged action after evidence replay; no further model calls",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 2,
+      "failed_stages": {
+        "compute": 1,
+        "load_inputs": 1
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "compute",
+          "error": "NameError: name 'S' is not defined",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 79,
+            "source_context": "78: # Compute\n79: def compute(inputs):\n80:     # Compute option values with dividends\n81:     american_put = crank_nicolson_psor(S_max, N_S, N_T, Delta_S, Delta_t, r, q, sigma, dividends, option_type='put')\n82:     american_call = crank_nicolson_psor(S_max, N_S, N_T, Delta_S, Delta_t, r, q, sigma, dividends, option_type='call')\n83:     european_put = crank_nicolson_psor(S_max, N_S, N_T, Delta_S, Delta_t, r, q, sigma, [], option_type='put')\n84:     european_call = crank_nicolson_psor(S_max, N_S, N_T, Delta_S, Delta_t, r, q, sigma, [], option_type='call')",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "47600005314c2f048fc9ecf10db98d988d6a99c771cbca3e78ab1fa8833a42df"
+        },
+        {
+          "stage": "load_inputs",
+          "error": "ValueError: load_inputs must return a non-empty mapping of checked inputs",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 75,
+            "source_context": "74: # Load inputs\n75: def load_inputs():\n76:     return {}\n77: \n78: # Compute\n79: def compute(inputs):\n80:     # Compute option values with dividends",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "fd483152276eda1dab9c6ea48b0d0eb9d49bcd4580d5eae59ca2334b8e8ff8dc"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "write_file",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "solver edit blocked because it restores a previously executed source version"
+        },
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "solver edit blocked because it restores a previously executed source version"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-variance-swap-replication",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 17,
+        "errors": 0
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 708.999744,
+      "model_request_attempts": 12,
+      "model_responses_completed": 12,
+      "agent_message": "stalled: repeated unchanged action after evidence replay; no further model calls",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 1,
+      "failed_stages": {
+        "compute": 1
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "compute",
+          "error": "KeyError: np.int64(14)",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 39,
+            "source_context": "38: \n39: def compute(inputs):\n40:     params = inputs[\"params\"]\n41:     option_chain = inputs[\"option_chain\"]\n42:     target_expiry = params[\"target_expiry\"]\n43:     forward_price = params[\"forward_prices\"][target_expiry]\n44:     expiries = params[\"expiries\"][target_expiry]",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "c5482cfff7bcb2c6c8d510203246690ef653e0dd398c9c290c6bfdebb47939de"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "syntax",
+          "summary": "syntax validation rejected edit; original source preserved"
+        },
+        {
+          "tool": "replace_lines",
+          "kind": "unknown",
+          "summary": "this exact edit already failed earlier; repeating it cannot change the file"
+        }
+      ]
+    },
+    {
+      "task_id": "t1-asian-option-levy-curran",
+      "reward": 0,
+      "checker": {
+        "passed": 0,
+        "failed": 0,
+        "errors": 25
+      },
+      "agent_exit_code": 1,
+      "checker_exit_code": 1,
+      "duration_sec": 493.11776,
+      "model_request_attempts": 9,
+      "model_responses_completed": 9,
+      "agent_message": "stalled: repeated unchanged action after evidence replay; no further model calls",
+      "consistency": {
+        "reward_exit_codes": true,
+        "checker_counts": true,
+        "starter_false_metrics": true,
+        "duration_matches_metrics": true,
+        "successful_checker_has_no_failures": true,
+        "response_count_not_over_attempts": true
+      },
+      "stage_receipts": 3,
+      "failed_stages": {
+        "load_inputs": 1,
+        "compute": 2
+      },
+      "completed_stage_runs": 0,
+      "stage_errors": [
+        {
+          "stage": "load_inputs",
+          "error": "FileNotFoundError: [Errno 2] No such file or directory: '/Users/liuzhuo1qq.com/Documents/Codex/2026-09-12/https-www-agenthon-net-https-www/eval_runs/workflow-v6.4-evidence-adapter-random10-20260924-coder14b/input-snapshot/units/t1-asian-option-levy-curran/scratch/spy_daily.csv'",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 11,
+            "source_context": "10: \n11: def load_inputs():\n12:     task_dir = Path(os.environ[\"TASK_DIR\"])\n13:     data_path = task_dir / \"scratch/spy_daily.csv\"\n14:     df = pd.read_csv(data_path)\n15:     return {\"data\": df}\n16: ",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "9137374b29fe8f69efa1ae3137f413487d74c6102dae2cb18f599081ac82877e"
+        },
+        {
+          "stage": "compute",
+          "error": "TypeError: stage protocol requires compute(inputs); got compute(inputs, data_path). Load paths/data in load_inputs and pass them in the inputs mapping; do not add required parameters to the stage function.",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 17,
+            "source_context": "16: \n17: def compute(inputs, data_path):\n18:     data = inputs[\"data\"]\n19:     close_prices = data[\"close\"].astype(float)\n20:     log_returns = np.log(close_prices[1:] / close_prices[:-1])\n21:     n_returns = len(log_returns)\n22:     return_mean = log_returns.mean()",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "0a69249293317061a73b91af41d03f6d638f966fe5478b83238afa432af451c2"
+        },
+        {
+          "stage": "compute",
+          "error": "NameError: name 'data_path' is not defined",
+          "callable_location": {
+            "location_verified": true,
+            "path": "scratch/solve.py",
+            "line": 17,
+            "source_context": "16: \n17: def compute(inputs):\n18:     data = inputs[\"data\"]\n19:     close_prices = data[\"close\"].astype(float)\n20:     log_returns = np.log(close_prices[1:] / close_prices[:-1])\n21:     n_returns = len(log_returns)\n22:     return_mean = log_returns.mean()",
+            "note": "Actual bound callable; later definitions/assignments may replace earlier functions."
+          },
+          "source_sha256": "894e1f4dfecd60f6898f810a67ba87a659213c64568f0a25f5e98b7d35de7e64"
+        }
+      ],
+      "current_source_staged_complete": false,
+      "audit_schemas": {},
+      "last_tool_failures": [
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "solver edit blocked because it restores a previously executed source version"
+        },
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "solver edit blocked because it restores a previously executed source version"
+        },
+        {
+          "tool": "replace_text",
+          "kind": "unknown",
+          "summary": "solver edit blocked because it restores a previously executed source version"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Known public set, not unseen generalization or a component ablation.",
+    "Stage receipts without independent verifier schema are not three-layer acceptance.",
+    "Process termination must be checked separately; completed rows alone do not prove exit."
+  ]
+}

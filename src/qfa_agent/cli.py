@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from contextlib import nullcontext
 import json
+import math
 import os
 import sys
 import tempfile
@@ -36,6 +37,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("verb", nargs="?", default="solve")
     parser.add_argument("--task-dir", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--time-budget-sec", type=float,
+                        help="Optional outer runtime limit; can only shorten the task card budget")
     return parser
 
 
@@ -54,6 +57,10 @@ def main(argv: list[str] | None = None) -> int:
     task_id = "unknown"
     started = time.monotonic()
     try:
+        if args.time_budget_sec is not None and (
+            not math.isfinite(args.time_budget_sec) or args.time_budget_sec <= 0
+        ):
+            raise ValueError("time budget must be finite and positive")
         task = load_task(args.task_dir)
         task_id = task.task_id
         output = args.out.resolve(strict=False)
@@ -81,7 +88,11 @@ def main(argv: list[str] | None = None) -> int:
                 scratch,
                 canaries=task.canaries,
             )
-            result = CodingAgent(model, config).solve(task, workspace, trajectory)
+            result = CodingAgent(model, config).solve(
+                task, workspace, trajectory,
+                deadline=(started + args.time_budget_sec
+                          if args.time_budget_sec is not None else started + task.timeout_sec),
+            )
         duration_sec = round(time.monotonic() - started, 6)
         _write_run_metrics(
             metrics_path,

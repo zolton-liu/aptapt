@@ -11,6 +11,10 @@ __pycache__/
 *.pem
 *.key
 submission.json
+team-claim.json
+submission.zip
+auth.json
+*.tar.gz
 dist/
 build/
 *.egg-info/

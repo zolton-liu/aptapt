@@ -190,7 +190,9 @@ class AgentIntegrationTests(unittest.TestCase):
                 TaskWorkspace(task_root, output, scratch),
                 Trajectory(trace),
             )
-            self.assertTrue(result.succeeded)
+            # A manual artifact write cannot hide the still-failing solver.
+            self.assertFalse(result.succeeded)
+            self.assertIn("execution still failing", result.message)
             events = [json.loads(line) for line in trace.read_text().splitlines()]
             self.assertTrue(
                 any("unchanged solve.py" in event.get("summary", "") for event in events)

@@ -15,6 +15,8 @@ import pandas as pd
 import scipy
 from scipy.stats import kurtosis, norm, skew
 
+from .stages import run_stages, staged_source
+
 
 _STANDARD_JSON_DEFAULT = json.JSONEncoder.default
 
@@ -64,9 +66,11 @@ def main(argv: list[str] | None = None) -> int:
     output_root.mkdir(parents=True, exist_ok=True)
     json.JSONEncoder.default = _finance_json_default
     sys.argv = [str(script), *raw[1:]]
-    runpy.run_path(
+    staged = (os.environ.get('QFA_STAGE_PIPELINE', '1').lower() not in {'0', 'false', 'off'}
+              and staged_source(script.read_text(encoding='utf-8')))
+    namespace = runpy.run_path(
         str(script),
-        run_name="__main__",
+        run_name="__qfa_staged__" if staged else "__main__",
         init_globals={
             "task_dir": TaskPath(input_root, output_root),
             "output_dir": output_root,
@@ -87,6 +91,9 @@ def main(argv: list[str] | None = None) -> int:
             "kurtosis": kurtosis,
         },
     )
+    if staged:
+        run_stages(namespace, script, Path(os.environ['QFA_STAGE_EVIDENCE']),
+                   os.environ['QFA_STAGE_RUN_ID'])
     return 0
 
 

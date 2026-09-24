@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import copy
 import json
 import math
 import os
@@ -15,6 +16,7 @@ from .memory import WorkingMemory
 from .model import Model, ModelError
 from .prompts import system_prompt, user_prompt
 from .protocol import ProtocolError, compact_action, parse_action
+from .repair import repair_context
 from .starters import starter_for, trusted_operator_program_for
 from .strategies import route_task
 from .task import TaskSpec, expected_output_files
@@ -130,20 +132,18 @@ class CodingAgent:
                 )
                 outcome = retried
                 raw_output = str(outcome.data.get("output", ""))
-            line_matches = re.findall(r'File "[^"]+", line (\d+)', raw_output)
-            if line_matches:
-                line_number = int(line_matches[-1])
+            if os.environ.get('QFA_REPAIR_CONTEXT', '1').lower() not in {'0', 'false', 'off'}:
                 try:
-                    outcome.data["source_context"] = workspace.read_file(
-                        script_path,
-                        max(1, line_number - 3),
-                        line_number + 3,
-                    )
+                    packet = repair_context(workspace, raw_output)
+                    outcome.data['repair_context'] = packet
+                    if packet.get('location_verified'):
+                        outcome.data['source_context'] = packet['source_context']
                 except (OSError, ValueError, WorkspaceError):
                     pass
             if not outcome.ok:
                 outcome.data["required_next_step"] = (
-                    "Use the traceback and source_context, make one precise repair, then rely on "
+                    "Use the participant-owned repair_context path/line and related variable definitions/call sites; "
+                    "library line numbers do not belong to solve.py. Make one precise repair, then rely on "
                     "the controller auto-run. Do not browse unrelated inputs or repeat the failed run."
                 )
 
@@ -235,7 +235,10 @@ class CodingAgent:
             *messages[-6:],
         ]
 
-    def solve(self, task: TaskSpec, workspace: TaskWorkspace, trajectory: Trajectory) -> AgentResult:
+    def solve(self, task: TaskSpec, workspace: TaskWorkspace, trajectory: Trajectory,
+              *, deadline: float | None = None) -> AgentResult:
+        started = time.monotonic()
+        deadline = min(deadline, started + task.timeout_sec) if deadline is not None else started + task.timeout_sec
         inventory = workspace.inventory("input")
         required_files = expected_output_files(task.safe_instruction)
         input_profile = workspace.input_profile(inventory)
@@ -251,7 +254,8 @@ class CodingAgent:
         starter_note = ""
         if starter is not None:
             workspace.write_file(starter.path, starter.content)
-            starter_outcome = workspace.run_python(starter.path, [], min(120.0, task.timeout_sec))
+            starter_outcome = workspace.run_python(starter.path, [], min(
+                120.0, max(0.1, deadline - time.monotonic() - self.config.reserve_sec)))
             trajectory.action(
                 0,
                 Action("run_python", {"script": starter.path, "source": "category_starter"}),
@@ -295,7 +299,8 @@ class CodingAgent:
                 operator_program.path, operator_program.content, overwrite=True
             )
             operator_outcome = workspace.run_python(
-                operator_program.path, [], min(180.0, task.timeout_sec)
+                operator_program.path, [], min(180.0, max(
+                    0.1, deadline - time.monotonic() - self.config.reserve_sec))
             )
             trajectory.action(
                 0,
@@ -348,14 +353,13 @@ class CodingAgent:
             max_python_runs=min(self.config.max_python_runs, strategy.max_python_runs),
             max_pytest_runs=min(self.config.max_pytest_runs, strategy.max_pytest_runs),
             expected_files=required_files,
+            deadline=deadline - self.config.reserve_sec,
         )
         workflow = WorkflowController(strategy)
         context = ContextManager(workspace, max_tokens=self.config.context_max_tokens,
                                  observation_chars=self.config.observation_max_chars)
         memory = WorkingMemory(workspace, task.instruction_sha256, strategy.category)
         stop_reason = ""
-        started = time.monotonic()
-        deadline = started + task.timeout_sec
         format_errors = 0
         consecutive_model_errors = 0
         model_calls = 0
@@ -370,7 +374,9 @@ class CodingAgent:
         action_history: list[dict[str, object]] = []
         failure_memory: list[dict[str, object]] = []
         inspection_actions = 0
-        seen_inspection_fingerprints: set[str] = set()
+        inspection_cache: dict[str, ToolOutcome] = {}
+        actions_without_mutation: dict[str, int] = {}
+        latest_execution_evidence: dict[str, object] = {}
         executable_drafted = False
         solver_dirty = False
         required_operator = self._required_high_level_operator(task)
@@ -504,6 +510,7 @@ class CodingAgent:
                 sort_keys=True,
             ).encode()
             fingerprint = hashlib.sha256(encoded).hexdigest()
+            actions_without_mutation[fingerprint] = actions_without_mutation.get(fingerprint, 0) + 1
             if fingerprint == last_fingerprint:
                 identical_count += 1
             else:
@@ -555,16 +562,13 @@ class CodingAgent:
                         )
                     },
                 )
-            elif is_inspection and fingerprint in seen_inspection_fingerprints:
-                outcome = ToolOutcome(
-                    False,
-                    "repeated inspection blocked because the same result is already in context",
-                    {
-                        "required_next_step": (
-                            "Use the existing profile/read result and write or repair scratch/solve.py."
-                        )
-                    },
-                )
+            elif is_inspection and fingerprint in inspection_cache:
+                # Context compaction can evict a previous read. Return its
+                # actual evidence instead of claiming it is still visible.
+                outcome = copy.deepcopy(inspection_cache[fingerprint])
+                outcome.data.update(cached=True, required_next_step=(
+                    "This is the unchanged cached evidence. Make a concrete repair now; "
+                    "another identical request without a mutation will not add information."))
             elif (
                 candidate_solver_digest is not None
                 and candidate_solver_digest in seen_solver_digests
@@ -591,6 +595,7 @@ class CodingAgent:
                     False,
                     "unchanged solve.py already failed; rerunning it cannot make progress",
                     {
+                        **latest_execution_evidence,
                         "required_next_step": (
                             "Use the latest traceback/source_context to edit the solver before another run."
                         )
@@ -655,7 +660,13 @@ class CodingAgent:
                     outcome = router.dispatch(action)
                     if is_inspection:
                         inspection_actions += 1
-                        seen_inspection_fingerprints.add(fingerprint)
+                        if outcome.ok and not outcome.mutated:
+                            inspection_cache[fingerprint] = copy.deepcopy(outcome)
+                    if outcome.mutated:
+                        # Files can also change through execution, not only
+                        # direct source edits. Never replay stale output reads.
+                        inspection_cache.clear()
+                        actions_without_mutation.clear()
                     if action.tool in {"write_file", "replace_text", "replace_lines", "copy_file"}:
                         path = str(
                             action.arguments.get(
@@ -669,7 +680,7 @@ class CodingAgent:
                                 # A source change invalidates previously cached
                                 # reads of that source.  Re-reading the same line
                                 # range is then progress, not a duplicate loop.
-                                seen_inspection_fingerprints.clear()
+                                inspection_cache.clear()
                     if action.tool == "run_python":
                         outcome = self._postprocess_python_outcome(
                             workspace, router, action, outcome, required_files
@@ -810,6 +821,15 @@ class CodingAgent:
                         f"{outcome.summary}; output contract failed, so change code/artifacts before validation"
                     )
 
+            if latest_run is not None and "returncode" in latest_run.data:
+                latest_execution_evidence = {
+                    key: latest_run.data[key] for key in
+                    ("output", "source_context", "repair_context", "stage_evidence")
+                    if key in latest_run.data
+                }
+                latest_execution_evidence['previous_returncode'] = latest_run.data['returncode']
+                inspection_cache.clear()
+
             if controller_events:
                 outcome.data["workflow"] = workflow.snapshot()
                 outcome.data["workflow_guidance"] = workflow.guidance()
@@ -865,6 +885,9 @@ class CodingAgent:
                 context.observation(outcome) if self.config.context_memory_enabled
                 else self._observation(outcome)
             )})
+            if actions_without_mutation.get(fingerprint, 0) > self.config.max_identical_actions:
+                stop_reason = "stalled: repeated unchanged action after evidence replay; no further model calls"
+                break
 
         # A common small-model failure mode is spending its final turn repairing
         # solve.py. Execute that fresh code once without another House request so
@@ -893,7 +916,8 @@ class CodingAgent:
             trajectory.action(effective_steps + 1, rescue_action, rescue_outcome)
 
         validation = workspace.validate_outputs(required_files)
-        status = "completed" if validation.ok and not workflow.state.tests_failed and not stop_reason else "incomplete"
+        status = "completed" if (validation.ok and not workflow.state.tests_failed
+                                 and not workflow.state.executions_failed and not stop_reason) else "incomplete"
         trajectory.finish(status, validation.files)
         return AgentResult(
             status=status,
@@ -905,6 +929,8 @@ class CodingAgent:
                 if status == "completed" or stop_reason
                 else "self-authored tests still failing"
                 if workflow.state.tests_failed
+                else "script execution still failing"
+                if workflow.state.executions_failed
                 else "budget ended before valid deliverables were produced"
             ),
             input_tokens=input_tokens,

@@ -10,6 +10,8 @@ import os
 import re
 import sys
 import tempfile
+import time
+import uuid
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -19,6 +21,37 @@ from .types import Action, OutputValidation, ToolOutcome
 
 class WorkspaceError(ValueError):
     pass
+
+
+class SyntaxEditError(WorkspaceError):
+    """A rejected proposal, not a mutation of the current source."""
+
+    def __init__(self, message: str, data: dict[str, Any]):
+        super().__init__(message)
+        self.data = data
+
+
+def _check_python_edit(path: Path, before: str, candidate: str) -> None:
+    if path.suffix.lower() != '.py':
+        return
+    try:
+        compile(before, str(path), 'exec')
+    except SyntaxError:
+        # Existing broken drafts may need several local edits. The post-write
+        # syntax gate still reports their errors and prevents auto-execution.
+        return
+    try:
+        compile(candidate, str(path), 'exec')
+    except SyntaxError as exc:
+        line = int(exc.lineno or 1)
+        def snippet(source: str) -> str:
+            return '\n'.join(f'{i + 1}: {value}' for i, value in enumerate(source.splitlines())
+                             if max(0, line - 4) <= i <= line + 2)
+        raise SyntaxEditError('syntax validation rejected edit; original source preserved', {
+            'error': f'{type(exc).__name__}: {exc.msg}', 'line': line,
+            'source_context': snippet(before), 'rejected_candidate_context': snippet(candidate),
+            'required_next_step': 'The current file is unchanged. Repair the proposal using current source line numbers and preserve indentation.',
+        }) from exc
 
 
 _HIDDEN_INPUT_PARTS = {
@@ -482,6 +515,8 @@ class TaskWorkspace:
             raise WorkspaceError("file already exists; use replace_text or set overwrite=true deliberately")
         if path.exists() and not path.is_file():
             raise WorkspaceError("write target is not a regular file")
+        if path.is_file() and path.suffix.lower() == '.py':
+            _check_python_edit(path, path.read_text(encoding='utf-8'), content)
         _atomic_write(path, content.encode("utf-8"))
         return path
 
@@ -568,7 +603,9 @@ class TaskWorkspace:
                 count = 1
         if count != 1:
             raise WorkspaceError(f"old text must occur exactly once; found {count}")
-        _atomic_write(path, text.replace(old, new, 1).encode("utf-8"))
+        candidate = text.replace(old, new, 1)
+        _check_python_edit(path, text, candidate)
+        _atomic_write(path, candidate.encode("utf-8"))
         return path
 
     def replace_lines(
@@ -593,6 +630,7 @@ class TaskWorkspace:
         if replacement and not replacement.endswith(("\n", "\r")) and end < len(lines):
             replacement += "\n"
         updated = "".join(lines[: start - 1]) + replacement + "".join(lines[end:])
+        _check_python_edit(path, source, updated)
         _atomic_write(path, updated.encode("utf-8"))
         return path
 
@@ -647,6 +685,13 @@ class TaskWorkspace:
                     except OSError:
                         pass
         timeout = max(0.1, min(float(timeout_sec), 600.0))
+        run_id = uuid.uuid4().hex
+        evidence_path = self.scratch_root / '.agent' / 'stages' / f'{run_id}.json'
+        evidence_path.parent.mkdir(parents=True, exist_ok=True)
+        source_digest = hashlib.sha256(script.read_bytes()).hexdigest()
+        from .stages import staged_source
+        staged_required = (os.environ.get('QFA_STAGE_PIPELINE', '1').lower() not in {'0', 'false', 'off'}
+                           and staged_source(script.read_text(encoding='utf-8')))
         result = run_bounded(
             [sys.executable, "-m", "qfa_agent.runtime", str(script), *args],
             cwd=self.scratch_root,
@@ -654,20 +699,39 @@ class TaskWorkspace:
             extra_env={
                 "TASK_DIR": str(self.input_root),
                 "OUTPUT_DIR": str(self.output_root),
+                "QFA_STAGE_EVIDENCE": str(evidence_path),
+                "QFA_STAGE_RUN_ID": run_id,
                 "PYTHONPATH": os.pathsep.join(
                     (str(_PACKAGE_ROOT), str(self.scratch_root), str(self.output_root))
                 ),
             },
         )
+        stage_data: dict[str, Any] = {'mode': 'legacy', 'complete': False}
+        if evidence_path.is_file() and evidence_path.stat().st_size <= 32_000:
+            try:
+                payload = json.loads(evidence_path.read_text(encoding='utf-8'))
+                if (isinstance(payload, dict) and payload.get('run_id') == run_id
+                        and payload.get('source_sha256') == source_digest):
+                    stage_data = payload
+                else:
+                    stage_data = {'mode': 'invalid', 'complete': False}
+            except (OSError, ValueError):
+                stage_data = {'mode': 'invalid', 'complete': False}
+        # A staged script cannot claim success by catching its audit exception
+        # or leaving evidence from an older source/run. Legacy scripts are not
+        # described as having passed the new stage gates.
+        stage_ok = not staged_required or (stage_data.get('mode') == 'staged'
+                                           and stage_data.get('complete') is True)
         return ToolOutcome(
-            ok=result.passed,
-            summary=("Python program completed" if result.passed else "Python program failed"),
+            ok=result.passed and stage_ok,
+            summary=("Python program completed" if result.passed and stage_ok else "Python program failed"),
             data={
                 "returncode": result.returncode,
                 "timed_out": result.timed_out,
                 "duration_sec": result.duration_sec,
                 "output": result.output,
                 "truncated_bytes": result.truncated_bytes,
+                "stage_evidence": stage_data,
             },
             mutated=True,
         )
@@ -878,6 +942,7 @@ class ToolRouter:
         max_python_runs: int = 8,
         max_pytest_runs: int = 3,
         expected_files: Iterable[str] = (),
+        deadline: float | None = None,
     ):
         self.workspace = workspace
         self.max_python_runs = max_python_runs
@@ -885,6 +950,17 @@ class ToolRouter:
         self.python_runs = 0
         self.pytest_runs = 0
         self.expected_files = tuple(expected_files)
+        self.deadline = deadline
+
+    def _execution_timeout(self, requested: float) -> float:
+        if not math.isfinite(requested) or requested <= 0:
+            raise WorkspaceError("execution timeout must be finite and positive")
+        if self.deadline is None:
+            return requested
+        remaining = self.deadline - time.monotonic()
+        if remaining < 0.1:
+            raise WorkspaceError("execution deadline reached; preserve time for final reporting")
+        return min(requested, remaining)
 
     @staticmethod
     def _str(args: dict[str, Any], key: str, default: str | None = None) -> str:
@@ -1093,11 +1169,12 @@ class ToolRouter:
                 raw_args = args.get("args", [])
                 if not isinstance(raw_args, list):
                     raise WorkspaceError("args must be an array")
+                timeout = self._execution_timeout(float(args.get("timeout_sec", 120)))
                 self.python_runs += 1
                 return self.workspace.run_python(
                     script,
                     raw_args,
-                    float(args.get("timeout_sec", 120)),
+                    timeout,
                 )
             if action.tool == "run_pytest":
                 if self.pytest_runs >= self.max_pytest_runs:
@@ -1105,8 +1182,9 @@ class ToolRouter:
                 paths = args.get("paths", [])
                 if not isinstance(paths, list) or not all(isinstance(item, str) for item in paths):
                     raise WorkspaceError("paths must be an array of strings")
+                timeout = self._execution_timeout(float(args.get("timeout_sec", 120)))
                 self.pytest_runs += 1
-                return self.workspace.run_pytest(paths, float(args.get("timeout_sec", 120)))
+                return self.workspace.run_pytest(paths, timeout)
             if action.tool == "validate_outputs":
                 validation = self.workspace.validate_outputs(self.expected_files)
                 return ToolOutcome(
@@ -1120,5 +1198,7 @@ class ToolRouter:
                     },
                 )
             return ToolOutcome(False, f"unknown tool: {action.tool}")
+        except SyntaxEditError as exc:
+            return ToolOutcome(False, str(exc), exc.data)
         except (WorkspaceError, OSError, UnicodeError, ValueError) as exc:
             return ToolOutcome(False, f"{type(exc).__name__}: {exc}")

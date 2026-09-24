@@ -128,12 +128,19 @@ def main() -> int:
                 "execution_mode": "local-public",
                 "official_repo": str(official_repo),
                 "n_tasks": len(tasks),
+                "task_ids": tasks,
                 "model_endpoint": args.model_endpoint,
                 "model_name": args.model_name,
                 "max_steps": args.max_steps,
                 "max_response_tokens": args.max_response_tokens,
                 "model_timeout_sec": args.model_timeout_sec,
                 "task_timeout_sec": args.task_timeout_sec,
+                "outer_deadline_forwarded": True,
+                "framework_features": {name: os.environ.get(name, "1").lower() not in {"0", "false", "off"}
+                                       for name in ("QFA_STAGE_PIPELINE", "QFA_REPAIR_CONTEXT", "QFA_VERSIONED_MEMORY")},
+                "verifier_timeout_sec": args.verifier_timeout_sec,
+                "reserve_sec": 5,
+                "runner_source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                 "starters_disabled": True,
                 "context_memory_enabled": os.environ.get("QFA_CONTEXT_MEMORY", "1").lower()
                 not in {"0", "false", "off"},
@@ -200,6 +207,8 @@ def main() -> int:
             str(unit),
             "--out",
             str(output_dir),
+            "--time-budget-sec",
+            str(args.task_timeout_sec),
         ]
         started = time.monotonic()
         try:
