@@ -53,6 +53,42 @@ def create_task_run(run_dir: Path) -> tuple[Path, Path]:
     return output_dir, scratch_dir
 
 
+def unit_hashes(unit: Path) -> dict[str, str]:
+    hashes = {}
+    for path in sorted(unit.rglob('*')):
+        relative = path.relative_to(unit)
+        if set(relative.parts).intersection({'__pycache__', '.pytest_cache', '.git'}):
+            continue
+        if path.is_symlink():
+            raise SystemExit(f'input snapshot does not accept symlinks: {path}')
+        if path.is_file():
+            hashes[relative.as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return hashes
+
+
+def snapshot_inputs(source: Path, tasks: list[str], destination: Path) -> dict:
+    destination.mkdir(exist_ok=False)
+    manifest = {}
+    for task in tasks:
+        if Path(task).name != task or task in {'.', '..'}:
+            raise SystemExit('task ID must be a directory basename')
+        unit = source / 'units' / task
+        if not (unit / 'card.toml').is_file():
+            raise SystemExit(f'missing unit: {unit}')
+        before = unit_hashes(unit)
+        target = destination / 'units' / task
+        shutil.copytree(unit, target, ignore=shutil.ignore_patterns('__pycache__', '.pytest_cache', '.git'))
+        if before != unit_hashes(target) or before != unit_hashes(unit):
+            raise SystemExit(f'input changed while snapshotting: {task}')
+        manifest[task] = before
+    return manifest
+
+
+def require_unchanged_unit(unit: Path, expected: dict[str, str]) -> None:
+    if unit_hashes(unit) != expected:
+        raise SystemExit(f'input/checker drift detected; preserving attempt without rerun: {unit.name}')
+
+
 def _replace_container_paths(source: str, replacements: dict[str, str]) -> str:
     # Replace in one pass. Sequential str.replace would rewrite a newly inserted
     # host path again when it happens to end in a key such as ``/output``.
@@ -120,8 +156,9 @@ def main() -> int:
     parser.add_argument("--verifier-timeout-sec", type=float, default=300.0)
     parser.add_argument("--limit", type=int)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument('--snapshot-inputs', action='store_true')
     args = parser.parse_args()
-    if args.resume and (os.environ.get('QFA_EXPERIENCE_DIR')
+    if args.resume and (args.snapshot_inputs or os.environ.get('QFA_EXPERIENCE_DIR')
                         or os.environ.get('QFA_VERIFICATION_REQUIRED', '0') == '1'):
         raise SystemExit('v6.3 verification/experience runs require a fresh experiment; automatic resume is not provenance-safe')
 
@@ -139,6 +176,15 @@ def main() -> int:
     if experiment_dir.exists() and not args.resume:
         raise SystemExit(f"experiment already exists; use --resume: {experiment_dir}")
     experiment_dir.mkdir(parents=True, exist_ok=args.resume)
+    execution_repo = official_repo
+    input_manifest = None
+    input_manifest_digest = None
+    if args.snapshot_inputs:
+        execution_repo = experiment_dir / 'input-snapshot'
+        input_manifest = snapshot_inputs(official_repo, tasks, execution_repo)
+        manifest_bytes = (json.dumps(input_manifest, sort_keys=True, indent=2) + '\n').encode()
+        (experiment_dir / 'input-manifest.json').write_bytes(manifest_bytes)
+        input_manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
     experience_snapshot = None
     experience_digest = None
     if os.environ.get('QFA_EXPERIENCE_DIR'):
@@ -157,6 +203,8 @@ def main() -> int:
                 "experience_snapshot": str(experience_snapshot) if experience_snapshot else None,
                 "experience_catalog_sha256": experience_digest,
                 "official_repo": str(official_repo),
+                'input_snapshot': str(execution_repo) if args.snapshot_inputs else None,
+                'input_manifest_sha256': input_manifest_digest,
                 "n_tasks": len(tasks),
                 "task_ids": tasks,
                 "model_endpoint": args.model_endpoint,
@@ -198,7 +246,9 @@ def main() -> int:
         if task_id in completed:
             print(f"[{position}/{len(tasks)}] skip {task_id} (already recorded)", flush=True)
             continue
-        unit = official_repo / "units" / task_id
+        unit = execution_repo / "units" / task_id
+        if input_manifest is not None:
+            require_unchanged_unit(unit, input_manifest[task_id])
         if not (unit / "card.toml").exists():
             raise SystemExit(f"missing unit: {unit}")
         run_dir = experiment_dir / task_id
@@ -261,6 +311,8 @@ def main() -> int:
         wall_time = time.monotonic() - started
         (run_dir / "agent.stdout.log").write_text(agent_stdout, encoding="utf-8")
         (run_dir / "agent.stderr.log").write_text(agent_stderr, encoding="utf-8")
+        if input_manifest is not None:
+            require_unchanged_unit(unit, input_manifest[task_id])
 
         verifier_rc = 125
         verifier_stdout = ""
@@ -291,6 +343,8 @@ def main() -> int:
             )
         (run_dir / "verifier.stdout.log").write_text(verifier_stdout, encoding="utf-8")
         (run_dir / "verifier.stderr.log").write_text(verifier_stderr, encoding="utf-8")
+        if input_manifest is not None:
+            require_unchanged_unit(unit, input_manifest[task_id])
 
         metrics = load_json_if_present(run_dir / "run_metrics.json")
         traced = trace_metrics(run_dir / "trajectory.jsonl")
@@ -342,6 +396,9 @@ def main() -> int:
         )
 
     write_aggregate(experiment_dir, rows)
+    if input_manifest is not None:
+        for task_id in tasks:
+            require_unchanged_unit(execution_repo / 'units' / task_id, input_manifest[task_id])
     return 0
 
 

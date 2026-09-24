@@ -68,6 +68,13 @@ def system_prompt(
         operator_block = """- Installed deterministic operator: `from qfa_agent.finance_ops import write_cliquet_outputs`.
 - The controller REQUIRES a short adapter calling `write_cliquet_outputs(DATA_PATH, output_dir, rate=0.05, dividend_yield=0.013)`.
 - It calibrates log-return volatility and prices each forward-start ATM reset with the correct time-zero equity-prepaid-forward factor, then writes calibration.json, cliquet_prices.csv, forward_start_details.csv, and summary.json. Do not sum ordinary European calls of increasing maturity."""
+    if os.environ.get('QFA_VERIFICATION_REQUIRED', '0') == '1' and 'write_' in operator_block:
+        operator_block = operator_block.replace('output_dir', 'candidate_dir')
+        operator_block += '''
+- Strict-mode writer adapter: import stage_writer, publish_artifacts from qfa_agent.staged_artifacts.
+  In compute(inputs), return stage_writer(lambda candidate_dir: OPERATOR(INPUT_PATHS_FROM_inputs, candidate_dir, TASK_OPTIONS)). Replace OPERATOR/arguments with the actual call above. The supplied candidate_dir is temporary, NOT final output_dir.
+  Returned result has result["values"] (the operator's original return value) and result["artifacts"] (captured bytes). In audit, read actual files with result["artifacts"].read_json("actual.json") or .read_csv("actual.csv"), and perform all three checks including an independent calculation. Merely comparing values to their serialized copy is NOT independent verification.
+  In write_outputs(result), call publish_artifacts(result["artifacts"]). Only after successful audit can the same captured bytes be published; the operator is not rerun. OUTPUT_SCHEMA still describes final files. Do not reimplement this operator or call it before the stage runtime.'''
     inventory = "\n".join(f"- input/{path}" for path in input_inventory[:300])
     if len(input_inventory) > 300:
         inventory += f"\n- ... {len(input_inventory) - 300} additional files; use list_files"
@@ -127,6 +134,10 @@ Common method
 2. Your first action should normally write a concise, complete scratch/solve.py. Read a data file
    only when the profile omitted a specific value essential to the algorithm. Respect the routed
    inspection limit and draft deadline.
+   Input CSV/JSON files are already readable in place: do not copy them into scratch just to load
+   them. A download/fetch script is not a solver template; do not copy it into solve.py or run it
+   when the supplied data is already present. Copy a provided implementation only for the
+   explicit repair/migration workflow below.
    Deterministic quality flags describe expected dirty input; apply the instruction's cleaning rule
    (usually filter/normalize/count) instead of aborting on a row that the task says is deliberately bad.
 3. A successful write/repair of scratch/solve.py is executed automatically by the controller.

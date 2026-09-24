@@ -108,6 +108,11 @@ class WorkflowController:
     def guard(self, action: Action) -> ToolOutcome | None:
         """Reject only unsafe transitions; guidance handles softer preferences."""
 
+        if action.tool == 'revise_method' and self.feedback_route == 'implementation':
+            return ToolOutcome(False, 'implementation failure needs code repair before method revision',
+                               {'required_next_step': 'Fix the observed path, signature, type, shape or symbol error first. '
+                                'A method hypothesis does not repair an implementation failure.'})
+
         if action.tool == 'finish' and os.environ.get('QFA_VERIFICATION_REQUIRED', '0') == '1':
             evidence = self._stage_evidence
             stages = evidence.get('stages', [])

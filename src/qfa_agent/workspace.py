@@ -1002,6 +1002,32 @@ class ToolRouter:
         return None
 
     def dispatch(self, action: Action) -> ToolOutcome:
+        # A successful API call is not necessarily a file change. Counting
+        # identical copies/writes as progress previously hid multi-action loops.
+        target = None
+        before = None
+        if action.tool in {'write_file', 'copy_file', 'replace_text', 'replace_lines'}:
+            raw = action.arguments.get('path', action.arguments.get('destination', ''))
+            try:
+                _, target = self.workspace.resolve(raw, write=True, must_exist=False)
+                before = target.read_bytes() if target.is_file() else None
+            except (WorkspaceError, OSError, ValueError):
+                target = None
+        outcome = self._dispatch(action)
+        if target is not None:
+            try:
+                after = target.read_bytes() if target.is_file() else None
+                outcome.mutated = before != after
+                if outcome.ok and not outcome.mutated:
+                    outcome.data['no_content_change'] = True
+                    outcome.data['required_next_step'] = (
+                        'The file bytes are unchanged. This is not a repair; use the current '
+                        'failure evidence to change the implementation before rerunning.')
+            except OSError:
+                pass  # Keep the operation's original evidence on an I/O race.
+        return outcome
+
+    def _dispatch(self, action: Action) -> ToolOutcome:
         args = action.arguments
         try:
             if action.tool == "list_files":
@@ -1204,8 +1230,13 @@ class ToolRouter:
                 source = self.workspace.scratch_root / 'solve.py'
                 plan['source_sha256'] = hashlib.sha256(source.read_bytes()).hexdigest() if source.is_file() else None
                 plan['status'] = 'hypothesis_not_validated'
+                plan_path = self.workspace.scratch_root / '.agent/method-plan.json'
+                encoded_plan = json.dumps(plan, ensure_ascii=False, indent=2)
+                if plan_path.is_file() and plan_path.read_text() == encoded_plan:
+                    return ToolOutcome(False, 'unchanged method hypothesis already recorded; implement or gather new evidence',
+                                       {'method_revision': plan, 'no_content_change': True})
                 self.workspace.write_file('scratch/.agent/method-plan.json',
-                                          json.dumps(plan, ensure_ascii=False, indent=2), overwrite=True)
+                                          encoded_plan, overwrite=True)
                 return ToolOutcome(True, 'method revision recorded; implement and rerun unchanged verification',
                                    {'method_revision': plan}, mutated=True)
             return ToolOutcome(False, f"unknown tool: {action.tool}")

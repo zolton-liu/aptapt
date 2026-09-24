@@ -50,6 +50,17 @@ class VerificationPromptTests(unittest.TestCase):
         self.assertIn('black_scholes_metrics',prompt)
         self.assertIn('audit returns AuditReport',prompt)
 
+    def test_legacy_writer_prompt_uses_candidate_directory_and_keeps_audit(self):
+        (self.root/'input/instruction.md').write_text('Price arithmetic Asian options using Curran and Levy.')
+        with patch.dict(os.environ,{'QFA_VERIFICATION_REQUIRED':'1'}):
+            prompt=self.prompt('derivatives-pricing')
+        self.assertIn('write_asian_option_outputs(DATA_PATH, candidate_dir',prompt)
+        self.assertNotIn('write_asian_option_outputs(DATA_PATH, output_dir',prompt)
+        self.assertIn('stage_writer',prompt)
+        self.assertIn('publish_artifacts',prompt)
+        self.assertIn('NOT independent verification',prompt)
+        self.assertIn('audit returns AuditReport',prompt)
+
     def test_only_relevant_domain_api_details_are_injected(self):
         for category, explanation in DOMAIN_APIS.items():
             text = verification_instructions(category)

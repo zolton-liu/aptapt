@@ -48,7 +48,7 @@ def focused_preview(key: str, value: dict) -> dict:
     if key == 'repair_context':
         kept = {k: value[k] for k in ('location_verified', 'path', 'line', 'source_sha256',
                                      'expression', 'related_symbols', 'visible_path_candidates') if k in value}
-        for k, limit in [('source_context', 1600), ('library_tail', 500), ('note', 200)]:
+        for k, limit in [('source_context', 1600), ('library_tail', 500), ('note', 200), ('path_advice', 300)]:
             if k in value:
                 kept[k] = bounded_text(str(value[k]), limit)
         return kept
@@ -59,6 +59,10 @@ def focused_preview(key: str, value: dict) -> dict:
             'verification': {k: item.get('verification', {}).get(k) for k in
                              ('schema', 'passed', 'layers', 'feedback_route')},
             'artifact_check': item.get('artifact_check', {}),
+            'callable_location': ({k: bounded_text(str(v), 900) if isinstance(v, str) else v
+                                   for k, v in item.get('callable_location', {}).items()
+                                   if k in {'location_verified', 'path', 'line', 'source_context', 'note'}}
+                                  if item.get('status') == 'failed' else {}),
             'failure_evidence': ([{k: bounded_text(str(c.get(k, '')), 500) for k in ('name', 'layer', 'evidence', 'feedback')}
                                  for c in item.get('verification', {}).get('checks', []) if not c['passed']][:3]
                                  or item.get('failure_evidence', [])[:3]),

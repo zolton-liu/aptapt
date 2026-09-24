@@ -14,6 +14,31 @@ sys.path.pop(0)
 
 
 class LocalRunnerPreservationTests(unittest.TestCase):
+    def test_input_snapshot_preserves_bytes_and_detects_modification(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); unit=root/'source/units/fixture'; unit.mkdir(parents=True)
+            (unit/'card.toml').write_text('[task]\nid="fixture"\n')
+            (unit/'data.json').write_text('{"x":1}')
+            snapshot=root/'snapshot'
+            manifest=runner.snapshot_inputs(root/'source',['fixture'],snapshot)
+            copy=snapshot/'units/fixture'
+            runner.require_unchanged_unit(copy,manifest['fixture'])
+            (unit/'data.json').write_text('{"x":2}')
+            self.assertEqual((copy/'data.json').read_text(),'{"x":1}')
+            (copy/'data.json').write_text('{"x":3}')
+            with self.assertRaisesRegex(SystemExit,'drift detected'):
+                runner.require_unchanged_unit(copy,manifest['fixture'])
+
+    def test_snapshot_rejects_symlink_and_detects_added_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); unit=root/'unit'; unit.mkdir()
+            (unit/'x').write_text('x')
+            manifest=runner.unit_hashes(unit)
+            (unit/'y').write_text('y')
+            with self.assertRaises(SystemExit):runner.require_unchanged_unit(unit,manifest)
+            (unit/'link').symlink_to(unit/'x')
+            with self.assertRaisesRegex(SystemExit,'symlinks'):runner.unit_hashes(unit)
+
     def test_fresh_run_is_created_once(self):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)/'one-attempt'

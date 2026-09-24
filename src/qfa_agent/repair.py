@@ -56,11 +56,14 @@ def repair_context(workspace, output: str) -> dict:
         'library_tail': output[-1600:],
         'scope': 'Observed source references, not proof of runtime values or a computed patch.',
     }
-    missing = re.search(r"No such file or directory: ['\"]([^'\"]+)['\"]", output)
+    missing = (re.search(r"No such file or directory: ['\"]([^'\"]+)['\"]", output)
+               or re.search(r'path does not exist: ([^\n]+)', output))
     if missing:
         basename = Path(missing.group(1)).name
         packet['visible_path_candidates'] = [
             f'input/{rel}' for rel in workspace.inventory('input') if Path(rel).name == basename
         ][:8]
-        packet['path_advice'] = 'Use the observed path; inspect all related assignments and call sites. No path was automatically substituted.'
+        packet['path_advice'] = ('Candidates are visible tool paths, not confirmed intended inputs. '
+                                'For input_path remove only the input/ prefix; do not pass scratch/ '
+                                'or absolute paths. Inspect assignments and call sites. No path was substituted.')
     return packet

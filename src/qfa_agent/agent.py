@@ -522,6 +522,18 @@ class CodingAgent:
             guarded = workflow.guard(action)
             candidate_solver_digest = self._candidate_solver_digest(workspace, action)
             current_solver_digest = self._current_solver_digest(workspace)
+            # A failed edit is invalid for the observed target version, not
+            # forever: a later genuine edit may make its match/range valid.
+            edit_version = None
+            if action.tool in {'write_file', 'replace_text', 'replace_lines', 'copy_file'}:
+                try:
+                    _, edit_target = workspace.resolve(
+                        str(action.arguments.get('path', action.arguments.get('destination', ''))),
+                        write=True, must_exist=False)
+                    edit_version = hashlib.sha256(edit_target.read_bytes()).hexdigest() if edit_target.is_file() else 'missing'
+                except (WorkspaceError, OSError, ValueError):
+                    edit_version = 'unresolved'
+            failed_edit_key = f'{fingerprint}:{edit_version}'
             is_inspection = action.tool in {"list_files", "read_file", "search_files"}
             if action.tool == "copy_file" and not str(
                 action.arguments.get("destination", "")
@@ -604,12 +616,12 @@ class CodingAgent:
                         )
                     },
                 )
-            elif action.tool in {"write_file", "replace_text", "replace_lines", "copy_file"} and failed_edit_fingerprints.get(fingerprint, 0):
+            elif action.tool in {"write_file", "replace_text", "replace_lines", "copy_file"} and failed_edit_fingerprints.get(failed_edit_key, 0):
                 outcome = ToolOutcome(
                     False,
                     "this exact edit already failed earlier; repeating it cannot change the file",
                     {
-                        "prior_failures": failed_edit_fingerprints[fingerprint],
+                        "prior_failures": failed_edit_fingerprints[failed_edit_key],
                         "required_next_step": (
                             "Use candidate_contexts/source_context to make the match unique, or rewrite "
                             "the smallest complete function/file with real source content."
@@ -669,7 +681,10 @@ class CodingAgent:
                         # Files can also change through execution, not only
                         # direct source edits. Never replay stale output reads.
                         inspection_cache.clear()
-                        actions_without_mutation.clear()
+                        # A hypothesis/observation file does not repair code or
+                        # change the data. Do not let note-taking reset stalls.
+                        if action.tool != 'revise_method':
+                            actions_without_mutation.clear()
                     if action.tool in {"write_file", "replace_text", "replace_lines", "copy_file"}:
                         path = str(
                             action.arguments.get(
@@ -837,7 +852,7 @@ class CodingAgent:
                 outcome.data["workflow"] = workflow.snapshot()
                 outcome.data["workflow_guidance"] = workflow.guidance()
             if action.tool in {"write_file", "replace_text", "replace_lines", "copy_file"} and not outcome.ok:
-                failed_edit_fingerprints[fingerprint] = failed_edit_fingerprints.get(fingerprint, 0) + 1
+                failed_edit_fingerprints[failed_edit_key] = failed_edit_fingerprints.get(failed_edit_key, 0) + 1
 
             failed_outcomes = [outcome, *(item[1] for item in controller_events)]
             for failed in failed_outcomes:

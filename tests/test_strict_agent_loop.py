@@ -93,3 +93,23 @@ class StrictAgentLoopTests(unittest.TestCase):
         memory=json.loads((self.root/'scratch/.agent/memory.json').read_text())
         self.assertTrue(memory['workflow']['solver_stages']['complete'])
         self.assertTrue(any(f['status']=='resolved' for f in memory['all_bounded_failures']))
+
+    def test_writer_adapter_runs_through_actual_runtime_and_controller(self):
+        source=SOURCE.replace('ERROR_OFFSET','0').replace('def compute(inputs):','def calculate(inputs):')
+        source=source.replace('def audit(inputs,result):', '''from qfa_agent.staged_artifacts import stage_writer,publish_artifacts
+def legacy_writer(inputs,directory):
+    values=calculate(inputs)
+    (directory/"results.json").write_text(json.dumps(values,allow_nan=False))
+    return values
+def compute(inputs):
+    return stage_writer(lambda directory:legacy_writer(inputs,directory))
+def audit(inputs,result):
+    result=result["artifacts"].read_json("results.json")''')
+        source=source.replace('(output_dir/"results.json").write_text(json.dumps(result,allow_nan=False))',
+                              'publish_artifacts(result["artifacts"])')
+        result,model=self.solve([{'tool':'write_file','arguments':{'path':'scratch/solve.py','content':source}},
+                                 {'tool':'finish','arguments':{}}])
+        self.assertTrue(result.succeeded,result.message)
+        self.assertFalse(result.starter_used)
+        self.assertEqual(len(model.requests),2)
+        self.assertEqual(json.loads((self.root/'output/results.json').read_text()),{'var':1.5,'es':2.5})
