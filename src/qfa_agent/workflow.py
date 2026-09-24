@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from dataclasses import dataclass
 
@@ -100,9 +101,25 @@ class WorkflowController:
         self._test_suites: dict[tuple[str, ...], bool] = {}
         self._executions: dict[str, bool] = {}
         self._stage_evidence: dict = {}
+        self.feedback_route = 'undetermined'
+        self.experiment_feedback: list[dict] = []
+        self.method_revisions: list[dict] = []
 
     def guard(self, action: Action) -> ToolOutcome | None:
         """Reject only unsafe transitions; guidance handles softer preferences."""
+
+        if action.tool == 'finish' and os.environ.get('QFA_VERIFICATION_REQUIRED', '0') == '1':
+            evidence = self._stage_evidence
+            stages = evidence.get('stages', [])
+            verified = (evidence.get('complete') is True and not evidence.get('stale')
+                        and any(s.get('name') == 'audit' and s.get('status') == 'passed'
+                                and s.get('verification', {}).get('schema') == 'three-layer-v1'
+                                and s.get('verification', {}).get('passed') is True for s in stages)
+                        and any(s.get('name') == 'write_outputs' and s.get('status') == 'passed'
+                                and s.get('artifact_check', {}).get('passed') is True for s in stages))
+            if not verified:
+                return ToolOutcome(False, 'three-layer verification gate blocked finish',
+                                   {'required_next_step': 'Run the current staged solver with AuditReport and OUTPUT_SCHEMA; legacy, missing or stale checks do not satisfy this gate.'})
 
         if action.tool == "finish" and self.state.tests_failed:
             return ToolOutcome(False, "workflow risk gate blocked finish: self-authored tests still failing",
@@ -155,6 +172,7 @@ class WorkflowController:
                 state.successful_runs += 1
                 state.phase = "audit"
                 state.repeated_failure_count = 0
+                self.feedback_route = 'none'
             else:
                 state.failed_runs += 1
                 self._record_failure(outcome)
@@ -179,6 +197,10 @@ class WorkflowController:
                 self._record_failure(outcome)
         elif action.tool == "finish" and not outcome.ok:
             state.phase = "audit"
+        elif action.tool == 'revise_method' and outcome.ok:
+            self.method_revisions.append(outcome.data['method_revision'])
+            self.method_revisions[:] = self.method_revisions[-3:]
+            state.phase = 'method_revision'
         elif action.tool in _INSPECTION_TOOLS and state.phase == "build":
             state.phase = "build"
 
@@ -196,14 +218,42 @@ class WorkflowController:
         state.last_failure_kind = classify_failure(outcome)
         state.repair_attempts += 1
         state.phase = "repair"
+        stages = outcome.data.get('stage_evidence', {}).get('stages', [])
+        structured = next((s.get('verification', {}) for s in stages
+                           if s.get('verification', {}).get('passed') is False), {})
+        if structured.get('feedback_route') in {'implementation', 'method_review', 'undetermined'}:
+            self.feedback_route = structured['feedback_route']
+        elif state.last_failure_kind in {'path', 'schema', 'type', 'alignment', 'symbol', 'syntax', 'dependency'}:
+            self.feedback_route = 'implementation'
+        else:
+            # Runtime success alone never proves that an algorithm is sound;
+            # unstructured NaN/timeouts/assertions have multiple possible causes.
+            self.feedback_route = 'undetermined'
+        if structured:
+            self.experiment_feedback.append({
+                'source_sha256': outcome.data.get('stage_evidence', {}).get('source_sha256'),
+                'route': self.feedback_route,
+                'evidence': [{k: c[k] for k in ('name', 'layer', 'evidence', 'feedback')}
+                             for c in structured.get('checks', []) if not c['passed']][:3],
+                'causal_status': 'diagnostic recommendation, not established root cause',
+            })
+            self.experiment_feedback[:] = self.experiment_feedback[-4:]
 
     def guidance(self) -> str:
         state = self.state
+        if state.phase == 'method_revision':
+            return 'Implement the recorded method revision, preserving task requirements and verifier tolerances; then rerun verification. Recording a hypothesis is not a successful repair.'
         if state.phase == "build":
             return "Builder: write the smallest complete executable solver, then run it."
         if state.phase == "execute":
             return "Executor: run the current solver now; do not spend a turn re-reading the task."
         if state.phase == "repair":
+            if self.feedback_route == 'method_review':
+                return ('Method review: inspect convergence/assumption evidence before another patch. '
+                        'Record a revised hypothesis, the single numerical-method change and its falsifying check '
+                        'using revise_method; then change the implementation and rerun the same verification. '
+                        'Do not loosen tolerances, alter the required model, change the task, or optimize against hidden checks. '
+                        'A method diagnosis is provisional: rule out implementation errors too.')
             guidance = {
                 "syntax": "Repair the exact syntax location from source_context, then rerun.",
                 "dependency": "Use the installed finance/Python stack or standard library; remove the unavailable import.",
@@ -249,6 +299,12 @@ class WorkflowController:
             "pending_scripts": [path for path, passed in self._executions.items() if not passed],
             "pending_test_suites": [list(paths) for paths, passed in self._test_suites.items() if not passed],
             "solver_stages": self._stage_evidence,
+            "feedback_route": self.feedback_route,
+            "experiment_feedback": [{**entry, 'evidence': [
+                {**check, 'evidence': str(check.get('evidence', ''))[:300]}
+                for check in entry['evidence'][:2]]} for entry in self.experiment_feedback[-2:]],
+            "method_revisions": [{key: value[:300] if isinstance(value, str) else value
+                                  for key, value in entry.items()} for entry in self.method_revisions[-2:]],
         }
 
     def as_prompt(self) -> str:

@@ -1197,6 +1197,17 @@ class ToolRouter:
                         "note": "Hidden task-specific pytest and financial invariants run only after the agent exits.",
                     },
                 )
+            if action.tool == 'revise_method':
+                plan = {key: self._str(args, key) for key in ('hypothesis', 'evidence', 'change', 'falsification')}
+                if any(not value.strip() or len(value) > 1000 for value in plan.values()):
+                    raise WorkspaceError('method revision needs four nonempty fields, each <=1000 characters')
+                source = self.workspace.scratch_root / 'solve.py'
+                plan['source_sha256'] = hashlib.sha256(source.read_bytes()).hexdigest() if source.is_file() else None
+                plan['status'] = 'hypothesis_not_validated'
+                self.workspace.write_file('scratch/.agent/method-plan.json',
+                                          json.dumps(plan, ensure_ascii=False, indent=2), overwrite=True)
+                return ToolOutcome(True, 'method revision recorded; implement and rerun unchanged verification',
+                                   {'method_revision': plan}, mutated=True)
             return ToolOutcome(False, f"unknown tool: {action.tool}")
         except SyntaxEditError as exc:
             return ToolOutcome(False, str(exc), exc.data)

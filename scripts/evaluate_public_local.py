@@ -5,7 +5,8 @@ This is a development runner, not a replacement for the official container
 harness.  It runs the agent against the unmodified public unit, stages a copy
 of the grader-owned checks, rewrites container mount paths to their local
 equivalents, and invokes pytest.  Results are committed after every unit so a
-long run can be resumed safely.
+long run keeps partial results. Existing per-task directories are never removed
+or rerun automatically, including interrupted attempts without a result row.
 """
 
 from __future__ import annotations
@@ -39,6 +40,17 @@ def discover_tasks(official_repo: Path, task_list: Path | None) -> list[str]:
         return load_tasks(task_list.resolve())
     units = official_repo / "units"
     return sorted(path.parent.name for path in units.glob("*/card.toml"))
+
+
+def create_task_run(run_dir: Path) -> tuple[Path, Path]:
+    try:
+        run_dir.mkdir(exist_ok=False)
+    except FileExistsError:
+        raise SystemExit(f'preserving existing task attempt; no automatic overwrite/rerun: {run_dir}')
+    output_dir, scratch_dir = run_dir / 'output', run_dir / 'scratch'
+    output_dir.mkdir()
+    scratch_dir.mkdir()
+    return output_dir, scratch_dir
 
 
 def _replace_container_paths(source: str, replacements: dict[str, str]) -> str:
@@ -109,6 +121,9 @@ def main() -> int:
     parser.add_argument("--limit", type=int)
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
+    if args.resume and (os.environ.get('QFA_EXPERIENCE_DIR')
+                        or os.environ.get('QFA_VERIFICATION_REQUIRED', '0') == '1'):
+        raise SystemExit('v6.3 verification/experience runs require a fresh experiment; automatic resume is not provenance-safe')
 
     project_root = Path(__file__).resolve().parents[1]
     official_repo = args.official_repo.resolve()
@@ -117,15 +132,30 @@ def main() -> int:
         tasks = tasks[: args.limit]
     if not tasks:
         raise SystemExit("no public units discovered")
+    if len(set(tasks)) != len(tasks):
+        raise SystemExit('duplicate task IDs are not independent pass@1 trials')
 
     experiment_dir = (args.output_root / args.experiment).resolve()
     if experiment_dir.exists() and not args.resume:
         raise SystemExit(f"experiment already exists; use --resume: {experiment_dir}")
-    experiment_dir.mkdir(parents=True, exist_ok=True)
+    experiment_dir.mkdir(parents=True, exist_ok=args.resume)
+    experience_snapshot = None
+    experience_digest = None
+    if os.environ.get('QFA_EXPERIENCE_DIR'):
+        from qfa_agent.experience import ExperienceStore
+        source_catalog = ExperienceStore(Path(os.environ['QFA_EXPERIENCE_DIR'])).path
+        experience_snapshot = experiment_dir / 'experience-snapshot'
+        experience_snapshot.mkdir(exist_ok=True)
+        target_catalog = experience_snapshot / source_catalog.name
+        shutil.copy2(source_catalog, target_catalog)
+        experience_digest = hashlib.sha256(target_catalog.read_bytes()).hexdigest()
     (experiment_dir / "run_config.json").write_text(
         json.dumps(
             {
                 "execution_mode": "local-public",
+                "three_layer_verification_required": os.environ.get('QFA_VERIFICATION_REQUIRED', '0') == '1',
+                "experience_snapshot": str(experience_snapshot) if experience_snapshot else None,
+                "experience_catalog_sha256": experience_digest,
                 "official_repo": str(official_repo),
                 "n_tasks": len(tasks),
                 "task_ids": tasks,
@@ -172,15 +202,12 @@ def main() -> int:
         if not (unit / "card.toml").exists():
             raise SystemExit(f"missing unit: {unit}")
         run_dir = experiment_dir / task_id
-        if run_dir.exists():
-            shutil.rmtree(run_dir)
-        output_dir = run_dir / "output"
-        scratch_dir = run_dir / "scratch"
-        output_dir.mkdir(parents=True)
-        scratch_dir.mkdir()
+        output_dir, scratch_dir = create_task_run(run_dir)
         print(f"[{position}/{len(tasks)}] run {task_id}", flush=True)
 
         env = os.environ.copy()
+        if experience_snapshot:
+            env['QFA_EXPERIENCE_DIR'] = str(experience_snapshot)
         env.update(
             {
                 "PYTHONPATH": str(project_root / "src"),
@@ -293,6 +320,9 @@ def main() -> int:
             "duration_sec": float(metrics.get("duration_sec", wall_time)),
             "steps": int(metrics.get("steps", traced["steps"]) or traced["steps"]),
             "model_calls": int(metrics.get("model_calls", traced["model_calls"]) or traced["model_calls"]),
+            "model_request_attempts": metrics.get('model_calls'),
+            "model_responses_completed": traced['model_calls'],
+            "request_attempts_provenance": 'run_metrics' if 'model_calls' in metrics else 'unavailable',
             "input_tokens": int(metrics.get("input_tokens", traced["input_tokens"]) or traced["input_tokens"]),
             "output_tokens": int(metrics.get("output_tokens", traced["output_tokens"]) or traced["output_tokens"]),
             "starter_used": bool(metrics.get("starter_used", False)),

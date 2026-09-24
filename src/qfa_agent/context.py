@@ -56,6 +56,12 @@ def focused_preview(key: str, value: dict) -> dict:
         'stages': [{k: item[k] for k in ('name', 'status') if k in item} | {
             'error': bounded_text(str(item.get('error', '')), 300),
             'failed_checks': [name for name, passed in item.get('checks', {}).items() if not passed][:4],
+            'verification': {k: item.get('verification', {}).get(k) for k in
+                             ('schema', 'passed', 'layers', 'feedback_route')},
+            'artifact_check': item.get('artifact_check', {}),
+            'failure_evidence': ([{k: bounded_text(str(c.get(k, '')), 500) for k in ('name', 'layer', 'evidence', 'feedback')}
+                                 for c in item.get('verification', {}).get('checks', []) if not c['passed']][:3]
+                                 or item.get('failure_evidence', [])[:3]),
         } for item in value.get('stages', [])[:4]]}
 
 

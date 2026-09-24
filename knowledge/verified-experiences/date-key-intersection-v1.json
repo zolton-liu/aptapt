@@ -1,0 +1,73 @@
+{
+  "rule": {
+    "id": "date-key-intersection-v1",
+    "conditions": [
+      "Task explicitly requires intersection of observation dates.",
+      "Both tables have unique datetime indexes.",
+      "Task permits joint complete-case filtering of these selected columns."
+    ],
+    "failure_evidence": "Response/design rows differ after return calculation or missing-value removal.",
+    "root_cause_hypothesis": "The two sides retained different dates; dimensions alone do not prove this cause.",
+    "repair": "Join by date, apply a joint missingness mask, then require identical indexes before arrays.",
+    "verification": "Original shape-error reproduction plus missing-date, shuffled-date, duplicate-date and asymmetric-NaN cases.",
+    "exclusions": [
+      "As-of/publication-time joins",
+      "Entity/date panels without explicit multi-key adaptation",
+      "Tasks requiring union/imputation or a different missingness policy",
+      "Duplicate dates without a task-defined aggregation policy"
+    ],
+    "tags": [
+      "alignment"
+    ],
+    "categories": [
+      "factor-research",
+      "risk-management",
+      "cross-domain"
+    ],
+    "fixture_scope": "synthetic minimal reproduction of observed 2516/2515 shape error; not proof of the real Fama-French root cause"
+  },
+  "status": "verified",
+  "observation": "Reported 2516 vs 2515 row mismatch; original task cause remains unverified. Validate only the scoped synthetic date-key rule.",
+  "observation_verified": false,
+  "actual_task_cause_verified": false,
+  "events": [
+    "failure_recorded",
+    "root_cause_hypothesis",
+    "reproduction_verified",
+    "variant_regressions_passed",
+    "promoted_for_scoped_retrieval",
+    "reproduction_verified",
+    "variant_regressions_passed",
+    "promoted_for_scoped_retrieval"
+  ],
+  "created_at": "2026-09-23T09:07:08.827879+00:00",
+  "validation": {
+    "cases": [
+      {
+        "case": "original_2516_2515",
+        "passed": true
+      },
+      {
+        "case": "missing_day",
+        "passed": true
+      },
+      {
+        "case": "shuffled_dates",
+        "passed": true
+      },
+      {
+        "case": "duplicate_dates_rejected",
+        "passed": true
+      },
+      {
+        "case": "asymmetric_missingness",
+        "passed": true
+      }
+    ],
+    "rule_source_sha256": "e6e5c64f16956a5db3e8b10b909c680e74053085340bfc384dfa9c4d3bfc0be2",
+    "promotion_engine_sha256": "0c23232e9c943a2293d25a1025ad7e9a87693cbd694e471da9d0fcba075cee43",
+    "semantics_sha256": "d5ccf269b2887b4a8feb678f6002886af626b205b00e7a429701af2ec0b0a43c",
+    "scope": "synthetic minimal reproduction of observed 2516/2515 shape error; not proof of the real Fama-French root cause"
+  },
+  "verified_at": "2026-09-23T09:33:25.795974+00:00"
+}

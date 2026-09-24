@@ -9,8 +9,11 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 from collections.abc import Mapping
 from pathlib import Path
+
+from .verification import AuditReport, artifact_structure
 
 
 STAGES = ('load_inputs', 'compute', 'audit', 'write_outputs')
@@ -28,6 +31,8 @@ def staged_source(source: str) -> bool:
 
 
 def run_stages(namespace: dict, script: Path, evidence_path: Path, run_id: str) -> None:
+    verified_required = (namespace.get('QFA_VERIFICATION') == 'three-layer-v1'
+                         or os.environ.get('QFA_VERIFICATION_REQUIRED', '0') == '1')
     state = {'mode': 'staged', 'run_id': run_id,
              'source_sha256': hashlib.sha256(script.read_bytes()).hexdigest(),
              'stages': [], 'complete': False,
@@ -56,15 +61,28 @@ def run_stages(namespace: dict, script: Path, evidence_path: Path, run_id: str) 
                     raise ValueError('compute must return a non-empty mapping of results; do not write final outputs here')
             elif name == 'audit':
                 checks = fn(inputs, result)
-                if (not isinstance(checks, Mapping) or not checks or len(checks) > 64
+                if isinstance(checks, AuditReport):
+                    entry['verification'] = checks.as_dict()
+                    checks.require_pass()
+                    entry['checks'] = {c.name: c.passed for c in checks.checks}
+                elif verified_required:
+                    raise ValueError('three-layer-v1 requires AuditReport, not self-declared bool checks')
+                elif (not isinstance(checks, Mapping) or not checks or len(checks) > 64
                         or not all(isinstance(k, str) and 0 < len(k) <= 160 and type(v) is bool
                                    for k, v in checks.items())):
                     raise ValueError('audit must return 1..64 named, Python-bool checks derived from actual inputs/results')
-                entry['checks'] = dict(checks)
-                if not all(checks.values()):
-                    raise ValueError('stage audit failed: ' + ', '.join(k for k, v in checks.items() if not v))
+                else:
+                    entry['checks'] = dict(checks)
+                    entry['verification'] = {'schema': 'legacy-booleans', 'independently_checked': False}
+                    if not all(checks.values()):
+                        raise ValueError('stage audit failed: ' + ', '.join(k for k, v in checks.items() if not v))
             else:
                 fn(result)
+                if verified_required:
+                    structural = artifact_structure(os.environ['OUTPUT_DIR'], namespace.get('OUTPUT_SCHEMA'))
+                    entry['artifact_check'] = {'passed': structural.passed, 'evidence': structural.evidence}
+                    if not structural.passed:
+                        raise ValueError('output structure failed: ' + structural.evidence)
             entry['status'] = 'passed'
         except Exception as exc:
             entry.update(status='failed', error=f'{type(exc).__name__}: {exc}'[:1500])

@@ -250,7 +250,10 @@ class CodingAgent:
             routing.source,
             routing.confidence,
         )
-        starter = starter_for(task, inventory) if self.config.starters_enabled else None
+        strict_verification = os.environ.get('QFA_VERIFICATION_REQUIRED', '0') == '1'
+        if strict_verification and os.environ.get('QFA_STAGE_PIPELINE', '1').lower() in {'0', 'false', 'off'}:
+            raise ValueError('QFA_VERIFICATION_REQUIRED=1 requires QFA_STAGE_PIPELINE enabled')
+        starter = starter_for(task, inventory) if self.config.starters_enabled and not strict_verification else None
         starter_note = ""
         if starter is not None:
             workspace.write_file(starter.path, starter.content)
@@ -291,7 +294,7 @@ class CodingAgent:
         # starter-disabled model performance.
         operator_program = (
             trusted_operator_program_for(task, inventory)
-            if self.config.starters_enabled else None
+            if self.config.starters_enabled and not strict_verification else None
         )
         operator_note = ""
         if operator_program is not None:
@@ -916,6 +919,11 @@ class CodingAgent:
             trajectory.action(effective_steps + 1, rescue_action, rescue_outcome)
 
         validation = workspace.validate_outputs(required_files)
+        if strict_verification:
+            workflow.state.validation_passed = validation.ok
+            verification_block = workflow.guard(Action('finish'))
+            if verification_block is not None and not stop_reason:
+                stop_reason = verification_block.summary
         status = "completed" if (validation.ok and not workflow.state.tests_failed
                                  and not workflow.state.executions_failed and not stop_reason) else "incomplete"
         trajectory.finish(status, validation.files)

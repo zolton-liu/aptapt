@@ -39,6 +39,7 @@ def _child_env(extra: Mapping[str, str] | None = None) -> dict[str, str]:
             "HTTPS_PROXY",
             "ALL_PROXY",
             "NO_PROXY",
+            "QFA_EXPERIENCE_DIR",
         }:
             continue
         env[key] = value
@@ -135,4 +136,3 @@ def run_bounded(
         timed_out=timed_out,
         truncated_bytes=omitted,
     )
-
