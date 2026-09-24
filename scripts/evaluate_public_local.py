@@ -66,6 +66,22 @@ def unit_hashes(unit: Path) -> dict[str, str]:
     return hashes
 
 
+def make_snapshot_files_read_only(unit: Path) -> None:
+    """Remove write bits from frozen input files without changing executability.
+
+    The runtime exposes convenience symlinks from scratch to uniquely named
+    input data files. A generated program may accidentally reuse an input
+    basename for an output. Read-only snapshot files make that mistake fail in
+    scratch instead of silently mutating the frozen evaluation input.
+    """
+
+    for path in sorted(unit.rglob('*')):
+        if path.is_symlink():
+            raise SystemExit(f'input snapshot does not accept symlinks: {path}')
+        if path.is_file():
+            path.chmod(path.stat().st_mode & ~0o222)
+
+
 def snapshot_inputs(source: Path, tasks: list[str], destination: Path) -> dict:
     destination.mkdir(exist_ok=False)
     manifest = {}
@@ -80,6 +96,9 @@ def snapshot_inputs(source: Path, tasks: list[str], destination: Path) -> dict:
         shutil.copytree(unit, target, ignore=shutil.ignore_patterns('__pycache__', '.pytest_cache', '.git'))
         if before != unit_hashes(target) or before != unit_hashes(unit):
             raise SystemExit(f'input changed while snapshotting: {task}')
+        make_snapshot_files_read_only(target)
+        if before != unit_hashes(target):
+            raise SystemExit(f'input changed while locking snapshot: {task}')
         manifest[task] = before
     return manifest
 

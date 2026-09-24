@@ -25,9 +25,27 @@ class LocalRunnerPreservationTests(unittest.TestCase):
             runner.require_unchanged_unit(copy,manifest['fixture'])
             (unit/'data.json').write_text('{"x":2}')
             self.assertEqual((copy/'data.json').read_text(),'{"x":1}')
+            self.assertEqual((copy/'data.json').stat().st_mode & 0o222, 0)
+            (copy/'data.json').chmod(0o644)
             (copy/'data.json').write_text('{"x":3}')
             with self.assertRaisesRegex(SystemExit,'drift detected'):
                 runner.require_unchanged_unit(copy,manifest['fixture'])
+
+    def test_snapshot_blocks_writes_through_a_scratch_data_symlink(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); unit=root/'source/units/fixture'; data=unit/'environment/data'
+            data.mkdir(parents=True)
+            (unit/'card.toml').write_text('[task]\nid="fixture"\n')
+            (data/'prices.csv').write_text('date,value\n2026-01-01,1\n')
+            snapshot=root/'snapshot'
+            manifest=runner.snapshot_inputs(root/'source',['fixture'],snapshot)
+            frozen=snapshot/'units/fixture/environment/data/prices.csv'
+            scratch=root/'scratch'; scratch.mkdir()
+            (scratch/'prices.csv').symlink_to(frozen)
+            with self.assertRaises(PermissionError):
+                (scratch/'prices.csv').write_text('overwritten\n')
+            self.assertEqual(frozen.read_text(),'date,value\n2026-01-01,1\n')
+            runner.require_unchanged_unit(snapshot/'units/fixture',manifest['fixture'])
 
     def test_snapshot_rejects_symlink_and_detects_added_file(self):
         with tempfile.TemporaryDirectory() as tmp:
