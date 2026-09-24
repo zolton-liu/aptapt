@@ -54,7 +54,8 @@ def load_profile(path: Path) -> dict:
         raise ValueError('max_response_tokens cannot exceed the adapter cap of 4000')
     if evaluation['max_steps'] > 25:
         raise ValueError('max_steps cannot exceed the 25 model-call cap')
-    for key in ('verification_required', 'experience_enabled'):
+    for key in ('verification_required', 'stage_pipeline', 'auto_complete_valid_run',
+                'experience_enabled'):
         if type(evaluation[key]) is not bool:
             raise ValueError(f'{key} must be a boolean')
     return profile
@@ -81,11 +82,13 @@ def local_environment(base: dict, profile: dict, source: Path) -> dict:
                MODEL_TOKEN='local-development-token', QFBENCH_SEED='0',
                NO_PROXY='127.0.0.1,localhost,::1', no_proxy='127.0.0.1,localhost,::1',
                QFA_DISABLE_STARTERS='1', QFA_JSON_MODE='1', QFA_CONTEXT_MEMORY='1',
-               QFA_CONTEXT_MAX_TOKENS=str(e['context_max_tokens']), QFA_STAGE_PIPELINE='1',
+               QFA_CONTEXT_MAX_TOKENS=str(e['context_max_tokens']),
+               QFA_STAGE_PIPELINE=str(int(e['stage_pipeline'])),
                QFA_REPAIR_CONTEXT='1', QFA_VERSIONED_MEMORY='1',
                QFA_MAX_MODEL_CALLS=str(e['max_steps']), QFA_MAX_STEPS=str(e['max_steps']),
                QFA_MAX_RESPONSE_TOKENS=str(e['max_response_tokens']),
-               QFA_VERIFICATION_REQUIRED=str(int(e['verification_required'])))
+               QFA_VERIFICATION_REQUIRED=str(int(e['verification_required'])),
+               QFA_AUTO_COMPLETE_VALID_RUN=str(int(e['auto_complete_valid_run'])))
     if e['experience_enabled']:
         env['QFA_EXPERIENCE_DIR'] = str(source / 'knowledge/verified-experiences')
     return env

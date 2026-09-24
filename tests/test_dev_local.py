@@ -89,7 +89,9 @@ def test_environment_clears_replay_remote_and_stale_feature_flags(tmp_path):
     assert env['PATH'] == '/bin'
     assert env['MODEL_ENDPOINT'] == profile['model']['endpoint']
     assert env['MODEL_TOKEN'] == 'local-development-token'
-    assert env['QFA_VERIFICATION_REQUIRED'] == '1'
+    assert env['QFA_VERIFICATION_REQUIRED'] == '0'
+    assert env['QFA_STAGE_PIPELINE'] == '0'
+    assert env['QFA_AUTO_COMPLETE_VALID_RUN'] == '1'
     assert env['QFA_MAX_MODEL_CALLS'] == '18'
     assert not {'QFA_REPLAY_FILE', 'QFA_MODEL_COMMAND', 'QFBENCH_NETWORK'} & env.keys()
     assert env['QFA_EXPERIENCE_DIR'].startswith(str(tmp_path))

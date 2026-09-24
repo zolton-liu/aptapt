@@ -43,6 +43,7 @@ class AgentConfig:
     context_memory_enabled: bool = True
     context_max_tokens: int = 16000
     observation_max_chars: int = 6000
+    auto_complete_valid_run: bool = False
 
     @classmethod
     def from_environment(cls) -> "AgentConfig":
@@ -68,6 +69,8 @@ class AgentConfig:
             not in {"0", "false", "off"},
             context_max_tokens=max(1024, int(os.environ.get("QFA_CONTEXT_MAX_TOKENS", "16000"))),
             observation_max_chars=max(1500, int(os.environ.get("QFA_OBSERVATION_MAX_CHARS", "6000"))),
+            auto_complete_valid_run=os.environ.get("QFA_AUTO_COMPLETE_VALID_RUN", "0").lower()
+            in {"1", "true", "yes", "on"},
         )
 
 
@@ -838,6 +841,32 @@ class CodingAgent:
                 outcome.data["controller_post_run_validation"] = (
                     validation_outcome.as_observation()
                 )
+                if (
+                    validation_outcome.ok
+                    and self.config.auto_complete_valid_run
+                    and not strict_verification
+                    and not workflow.state.tests_failed
+                    and not workflow.state.executions_failed
+                ):
+                    trajectory.action(step, action, outcome)
+                    for controller_action, controller_outcome in controller_events:
+                        trajectory.action(step, controller_action, controller_outcome)
+                    trajectory.finish("completed", validation.files)
+                    return AgentResult(
+                        status="completed",
+                        steps=step,
+                        model_calls=model_calls,
+                        output_validation=validation,
+                        message=(
+                            "controller auto-completed after the current solver executed "
+                            "and deterministic output checks passed"
+                        ),
+                        input_tokens=input_tokens,
+                        output_tokens=output_tokens,
+                        starter_used=starter is not None or operator_program is not None,
+                        routed_category=strategy.category,
+                        solver_architecture=strategy.architecture,
+                    )
                 if not validation_outcome.ok:
                     last_solver_execution_failed = True
                     outcome.ok = False

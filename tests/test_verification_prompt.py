@@ -35,6 +35,16 @@ class VerificationPromptTests(unittest.TestCase):
                     self.assertIn('OUTPUT_SCHEMA', prompt)
                     self.assertIn('not the official checker', prompt)
 
+    def test_local_compatibility_prompt_keeps_checks_without_stage_protocol(self):
+        with patch.dict(os.environ, {'QFA_VERIFICATION_REQUIRED': '0',
+                                      'QFA_STAGE_PIPELINE': '0'}):
+            prompt = self.prompt('factor-research')
+        self.assertIn('normal executable scratch/solve.py', prompt)
+        self.assertIn('finite values and aligned indexes', prompt)
+        self.assertIn('independently calculated identity', prompt)
+        self.assertNotIn('audit returns AuditReport', prompt)
+        self.assertIn('Use `.iloc[position]`', prompt)
+
     def test_strict_template_preserves_implementation_without_audit_exemption(self):
         (self.root/'input/instruction.md').write_text('Fix old API migration; write output/results.json.')
         with patch.dict(os.environ,{'QFA_VERIFICATION_REQUIRED':'1'}):

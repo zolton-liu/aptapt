@@ -16,6 +16,48 @@ from qfa_agent.workspace import TaskWorkspace
 
 
 class AgentIntegrationTests(unittest.TestCase):
+    def test_local_compatibility_mode_auto_completes_after_valid_execution(self) -> None:
+        class OneReplyModel:
+            name = "one-reply"
+
+            def __init__(self, action):
+                self.action = action
+                self.calls = 0
+
+            def complete(self, messages, *, timeout_sec):
+                del messages, timeout_sec
+                self.calls += 1
+                if self.calls > 1:
+                    raise AssertionError("a valid current execution should not need a finish turn")
+                from qfa_agent.model import ModelReply
+                return ModelReply(self.action)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            task_root, output, scratch = root / "task", root / "output", root / "scratch"
+            task_root.mkdir(); output.mkdir(); scratch.mkdir()
+            (task_root / "instruction.md").write_text("Write output/results.json.")
+            (task_root / "card.toml").write_text(
+                'schema_version="2.0"\n[task]\nid="local-auto-complete"\n'
+                '[provenance]\ndata_cutoff=""\n[contamination]\ncanary_guid=""\n'
+                '[agent]\ntimeout_sec=30\n'
+            )
+            source = (
+                "import json, os\nfrom pathlib import Path\n"
+                "(Path(os.environ['OUTPUT_DIR'])/'results.json').write_text(json.dumps({'value': 1}))\n"
+            )
+            model = OneReplyModel({"tool": "write_file", "arguments": {
+                "path": "scratch/solve.py", "content": source}})
+            with patch.dict(os.environ, {"QFA_STAGE_PIPELINE": "0",
+                                          "QFA_VERIFICATION_REQUIRED": "0"}):
+                result = CodingAgent(model, AgentConfig(
+                    max_steps=3, reserve_sec=0, auto_complete_valid_run=True
+                )).solve(load_task(task_root), TaskWorkspace(task_root, output, scratch),
+                        Trajectory(scratch / "trace.jsonl"))
+            self.assertTrue(result.succeeded)
+            self.assertEqual(result.model_calls, 1)
+            self.assertIn("auto-completed", result.message)
+
     def test_controller_auto_runs_solver_and_validates_before_finish(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

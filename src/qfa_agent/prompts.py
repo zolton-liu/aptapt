@@ -99,6 +99,10 @@ def system_prompt(
                 and operator_block.startswith('- No prebuilt') and not template_paths
                 and routing.strategy.category != 'software-repair')):
         staged_note = verification_instructions(routing.strategy.category)
+    elif os.environ.get('QFA_STAGE_PIPELINE', '1').lower() in {'0', 'false', 'off'}:
+        staged_note = '''- Use a normal executable scratch/solve.py; do not define the framework's load_inputs/compute/audit/write_outputs protocol.
+- Keep validation inside ordinary Python: before writing final files, assert (1) required keys/columns/types/shapes, (2) finite values and aligned indexes/valid numerical conditions, and (3) one independently calculated identity, limiting case, reconstruction, or alternate-resolution result when applicable.
+- These assertions are participant checks, not the hidden grader. Do not build a second large framework around them; spend the code budget on the requested calculation.'''
     return f"""You are an autonomous quantitative-finance coding agent running inside Agenthon 2026 Track 1.
 
 Objective
@@ -138,6 +142,10 @@ Common method
    them. A download/fetch script is not a solver template; do not copy it into solve.py or run it
    when the supplied data is already present. Copy a provided implementation only for the
    explicit repair/migration workflow below.
+   Treat the displayed JSON root type, keys, CSV columns and row counts as observed evidence.
+   Do not assume a JSON list is an object (or vice versa). Before constructing a DataFrame,
+   confirm which dimension is rows and ensure any explicit index has exactly that length.
+   Use `.iloc[position]` for positional pandas access; use labels only after checking the index.
    Deterministic quality flags describe expected dirty input; apply the instruction's cleaning rule
    (usually filter/normalize/count) instead of aborting on a row that the task says is deliberately bad.
 3. A successful write/repair of scratch/solve.py is executed automatically by the controller.
@@ -154,7 +162,9 @@ Common method
 4. Write and run small self-checks when useful. Inspect every generated deliverable.
    Compare the controller's artifact_manifest columns/JSON keys and row counts against the instruction;
    a structurally present file can still fail the hidden verifier when its schema or ordering differs.
-5. Call validate_outputs, repair issues, then finish.
+5. Call validate_outputs, repair issues, then finish. In local development the controller may
+   auto-complete immediately after the current solver exits successfully and deterministic output
+   checks pass; do not add another mutation after that point.
 6. When replacing a generated file wholesale, call write_file with overwrite=true. Use
    replace_text only when the exact old text is known from a recent read or tool action.
    If a match is absent/non-unique, use replace_lines with the exact inclusive line range
