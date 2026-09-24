@@ -71,6 +71,43 @@ class VerificationPromptTests(unittest.TestCase):
         self.assertIn('NOT independent verification',prompt)
         self.assertIn('audit returns AuditReport',prompt)
 
+    def test_fragile_public_families_receive_their_validated_operator(self):
+        cases = (
+            (
+                'Calibrate a geometric mean-reverting jump-diffusion.',
+                'fixed-income',
+                'write_mean_reverting_jump_diffusion_outputs',
+            ),
+            (
+                'Run a Fama-French 3-factor regression with Newey-West errors.',
+                'factor-research',
+                'write_fama_french_outputs',
+            ),
+            (
+                'Compare closed-form implied volatility approximations.',
+                'derivatives-pricing',
+                'write_implied_volatility_approximation_outputs',
+            ),
+            (
+                'Compute a variance swap fair strike from a dirty option chain.',
+                'derivatives-pricing',
+                'write_variance_swap_outputs',
+            ),
+            (
+                'Use Crank-Nicolson and projected successive over-relaxation.',
+                'derivatives-pricing',
+                'write_american_option_fd_outputs',
+            ),
+        )
+        with patch.dict(os.environ, {'QFA_VERIFICATION_REQUIRED': '0',
+                                      'QFA_STAGE_PIPELINE': '0'}):
+            for instruction, category, operator in cases:
+                with self.subTest(operator=operator):
+                    (self.root/'input/instruction.md').write_text(instruction)
+                    prompt = self.prompt(category)
+                    self.assertIn(operator, prompt)
+                    self.assertIn('one top-level call', prompt)
+
     def test_only_relevant_domain_api_details_are_injected(self):
         for category, explanation in DOMAIN_APIS.items():
             text = verification_instructions(category)

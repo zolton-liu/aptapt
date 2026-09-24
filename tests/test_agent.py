@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from qfa_agent.agent import AgentConfig, CodingAgent
 from qfa_agent.model import ModelError, ReplayModel
+from qfa_agent.protocol import Action
 from qfa_agent.starters import StarterProgram
 from qfa_agent.task import load_task
 from qfa_agent.trace import Trajectory
@@ -16,6 +17,76 @@ from qfa_agent.workspace import TaskWorkspace
 
 
 class AgentIntegrationTests(unittest.TestCase):
+    def test_local_operator_adapter_gate_accepts_only_one_short_top_level_call(self) -> None:
+        operator = "write_variance_swap_outputs"
+        valid = (
+            "from qfa_agent.finance_ops import write_variance_swap_outputs\n"
+            "write_variance_swap_outputs('chain.csv', 'params.json', 'output')\n"
+        )
+        with patch.dict(os.environ, {"QFA_STAGE_PIPELINE": "0"}):
+            self.assertIsNone(
+                CodingAgent._required_operator_adapter_issue(valid, operator)
+            )
+            self.assertIn(
+                "exactly once",
+                CodingAgent._required_operator_adapter_issue(
+                    valid + "write_variance_swap_outputs('a', 'b', 'c')\n",
+                    operator,
+                ),
+            )
+            self.assertIn(
+                "no functions or loops",
+                CodingAgent._required_operator_adapter_issue(
+                    "from qfa_agent.finance_ops import write_variance_swap_outputs\n"
+                    "for _ in range(1):\n"
+                    "    write_variance_swap_outputs('a', 'b', 'c')\n",
+                    operator,
+                ),
+            )
+
+    def test_strict_mode_allows_staged_required_operator_wrapper(self) -> None:
+        source = (
+            "def compute(inputs):\n"
+            "    return write_american_option_fd_outputs(inputs['candidate_dir'])\n"
+        )
+        with patch.dict(os.environ, {"QFA_STAGE_PIPELINE": "1"}):
+            self.assertIsNone(
+                CodingAgent._required_operator_adapter_issue(
+                    source, "write_american_option_fd_outputs"
+                )
+            )
+
+    def test_operator_adapter_gate_previews_followup_line_edits(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            task_root, output, scratch = root / "task", root / "output", root / "scratch"
+            task_root.mkdir(); output.mkdir(); scratch.mkdir()
+            workspace = TaskWorkspace(task_root, output, scratch)
+            workspace.write_file(
+                "scratch/solve.py",
+                "from qfa_agent.finance_ops import write_variance_swap_outputs\n"
+                "write_variance_swap_outputs('a', 'b', 'c')\n",
+            )
+            action = Action(
+                "replace_lines",
+                {
+                    "path": "scratch/solve.py",
+                    "start_line": 2,
+                    "end_line": 2,
+                    "content": "for _ in range(2):\n"
+                    "    write_variance_swap_outputs('a', 'b', 'c')",
+                },
+            )
+            candidate = CodingAgent._candidate_solver_source(workspace, action)
+            self.assertIsNotNone(candidate)
+            with patch.dict(os.environ, {"QFA_STAGE_PIPELINE": "0"}):
+                self.assertIn(
+                    "no functions or loops",
+                    CodingAgent._required_operator_adapter_issue(
+                        candidate or "", "write_variance_swap_outputs"
+                    ),
+                )
+
     def test_local_compatibility_mode_auto_completes_after_valid_execution(self) -> None:
         class OneReplyModel:
             name = "one-reply"

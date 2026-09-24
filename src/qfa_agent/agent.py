@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import copy
 import json
@@ -99,6 +100,50 @@ class CodingAgent:
             return "write_asian_option_outputs"
         if "cliquet" in lowered and "forward-start" in lowered:
             return "write_cliquet_outputs"
+        if "geometric mean-reverting jump-diffusion" in lowered:
+            return "write_mean_reverting_jump_diffusion_outputs"
+        if "fama-french 3-factor" in lowered and "newey-west" in lowered:
+            return "write_fama_french_outputs"
+        if "closed-form implied volatility approximations" in lowered:
+            return "write_implied_volatility_approximation_outputs"
+        if "variance swap fair strike" in lowered and "dirty option chain" in lowered:
+            return "write_variance_swap_outputs"
+        if "crank-nicolson" in lowered and "projected successive over-relaxation" in lowered:
+            return "write_american_option_fd_outputs"
+        return None
+
+    @staticmethod
+    def _required_operator_adapter_issue(source: str, operator: str) -> str | None:
+        """Return why a local-mode operator adapter is not acceptably narrow.
+
+        Merely mentioning a required operator did not prevent models from
+        reimplementing an entire workflow and misusing the returned bundle. In
+        compatibility mode the operator already owns computation and output,
+        so the generated program must be a single-call adapter. Strict staged
+        mode still permits its explicit compute/audit/write wrapper.
+        """
+
+        if operator not in source:
+            return f"the adapter does not call {operator}"
+        if os.environ.get("QFA_STAGE_PIPELINE", "1").lower() not in {"0", "false", "off"}:
+            return None
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            return None  # Normal execution feedback provides the precise syntax error.
+        calls = [
+            node for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and (
+                isinstance(node.func, ast.Name) and node.func.id == operator
+                or isinstance(node.func, ast.Attribute) and node.func.attr == operator
+            )
+        ]
+        if len(calls) != 1:
+            return f"the adapter must call {operator} exactly once"
+        forbidden = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.For, ast.AsyncFor, ast.While)
+        if any(isinstance(node, forbidden) for node in ast.walk(tree)) or len(source.encode("utf-8")) > 1800:
+            return "the local compatibility adapter must be short and contain no functions or loops"
         return None
 
     @staticmethod
@@ -162,12 +207,13 @@ class CodingAgent:
         return outcome
 
     @staticmethod
-    def _candidate_solver_digest(
+    def _candidate_solver_source(
         workspace: TaskWorkspace, action: Action
     ) -> str | None:
-        """Preview a solve.py edit so an A→B→A repair cycle can be blocked."""
+        """Preview the complete solve.py produced by a mutation action."""
 
-        if str(action.arguments.get("path", "")).lower() != "scratch/solve.py":
+        target = action.arguments.get("path", action.arguments.get("destination", ""))
+        if str(target).lower() != "scratch/solve.py":
             return None
         try:
             if action.tool == "write_file":
@@ -185,15 +231,44 @@ class CodingAgent:
                 if current.count(old) != 1:
                     return None
                 candidate = current.replace(old, new, 1)
+            elif action.tool == "replace_lines":
+                content = action.arguments.get("content")
+                if not isinstance(content, str):
+                    return None
+                start = int(action.arguments.get("start_line", 0))
+                end = int(action.arguments.get("end_line", 0))
+                _, path = workspace.resolve("scratch/solve.py")
+                current = path.read_text(encoding="utf-8")
+                lines = current.splitlines(keepends=True)
+                if start < 1 or end < start or end > len(lines):
+                    return None
+                replacement = content
+                if replacement and not replacement.endswith(("\n", "\r")) and end < len(lines):
+                    replacement += "\n"
+                candidate = "".join(lines[: start - 1]) + replacement + "".join(lines[end:])
             elif action.tool == 'replace_function':
                 from .function_edit import replace_function_source
                 _, path = workspace.resolve('scratch/solve.py')
                 candidate = replace_function_source(path.read_bytes().decode('utf-8'),
                     action.arguments.get('name'), action.arguments.get('content'),
                     action.arguments.get('expected_sha256'))
+            elif action.tool == "copy_file":
+                _, source = workspace.resolve(str(action.arguments.get("source", "")))
+                candidate = source.read_text(encoding="utf-8")
             else:
                 return None
         except (WorkspaceError, OSError, UnicodeError, ValueError, SyntaxError):
+            return None
+        return candidate
+
+    @classmethod
+    def _candidate_solver_digest(
+        cls, workspace: TaskWorkspace, action: Action
+    ) -> str | None:
+        """Preview a solve.py edit so an A→B→A repair cycle can be blocked."""
+
+        candidate = cls._candidate_solver_source(workspace, action)
+        if candidate is None:
             return None
         return hashlib.sha256(candidate.encode("utf-8")).hexdigest()
 
@@ -552,20 +627,25 @@ class CodingAgent:
                 staged_path = str(action.arguments.get("path", "")).lower()
                 if staged_path.startswith("scratch/") and not staged_path.endswith(".py"):
                     is_inspection = True
+            operator_adapter_issue = None
+            candidate_solver_source = self._candidate_solver_source(workspace, action)
             if (
-                action.tool == "write_file"
-                and str(action.arguments.get("path", "")).lower().endswith("solve.py")
+                candidate_solver_source is not None
                 and required_operator is not None
-                and required_operator not in str(action.arguments.get("content", ""))
             ):
+                operator_adapter_issue = self._required_operator_adapter_issue(
+                    candidate_solver_source, required_operator
+                )
+            if operator_adapter_issue is not None:
                 outcome = ToolOutcome(
                     False,
-                    f"this task family requires the tested {required_operator} operator",
+                    f"invalid required-operator adapter: {operator_adapter_issue}",
                     {
                         "required_operator": required_operator,
                         "required_next_step": (
-                            "Rewrite scratch/solve.py as a short adapter that imports and calls "
-                            f"qfa_agent.finance_ops.{required_operator}; do not reimplement its formulas."
+                            "Rewrite scratch/solve.py as a top-level adapter under 1800 bytes that "
+                            f"imports and calls qfa_agent.finance_ops.{required_operator} exactly once. "
+                            "Do not define functions, loops, or reimplement formulas; the operator writes outputs."
                         ),
                     },
                 )

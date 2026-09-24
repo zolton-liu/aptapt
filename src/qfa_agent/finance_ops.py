@@ -1113,3 +1113,17 @@ def write_cliquet_outputs(
         "details": details,
         "summary": summary,
     }
+
+
+# Re-export the larger validated workflows from focused modules.  Keeping the
+# imports at the end avoids circular imports and preserves the existing public
+# `qfa_agent.finance_ops` tool contract used by generated adapters.
+from .american_fd import write_american_option_fd_outputs
+from .calibration_workflows import (
+    write_fama_french_outputs,
+    write_mean_reverting_jump_diffusion_outputs,
+)
+from .derivatives_workflows import (
+    write_implied_volatility_approximation_outputs,
+    write_variance_swap_outputs,
+)

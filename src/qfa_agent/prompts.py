@@ -68,6 +68,26 @@ def system_prompt(
         operator_block = """- Installed deterministic operator: `from qfa_agent.finance_ops import write_cliquet_outputs`.
 - The controller REQUIRES a short adapter calling `write_cliquet_outputs(DATA_PATH, output_dir, rate=0.05, dividend_yield=0.013)`.
 - It calibrates log-return volatility and prices each forward-start ATM reset with the correct time-zero equity-prepaid-forward factor, then writes calibration.json, cliquet_prices.csv, forward_start_details.csv, and summary.json. Do not sum ordinary European calls of increasing maturity."""
+    elif "geometric mean-reverting jump-diffusion" in lowered:
+        operator_block = """- Installed deterministic operator: `from qfa_agent.finance_ops import write_mean_reverting_jump_diffusion_outputs`.
+- The controller REQUIRES one top-level call: `write_mean_reverting_jump_diffusion_outputs(DATA_PATH, output_dir)`. The operator reads DGS10, performs the discrete-to-continuous OU inversion, residual jump calibration, analytic moments, seeded compound-Poisson Monte Carlo cross-check, and writes all four artifacts.
+- Write only the import, environment-based paths, and this call. Do not define functions, loops, or unpack the returned bundle."""
+    elif "fama-french 3-factor" in lowered and "newey-west" in lowered:
+        operator_block = """- Installed deterministic operator: `from qfa_agent.finance_ops import write_fama_french_outputs`.
+- The controller REQUIRES one top-level call: `write_fama_french_outputs(PRICES_PATH, FACTORS_PATH, output_dir)`. It aligns by date key, computes OLS/HAC/GRS/VIF/rolling betas, independently reconstructs residuals, and writes the three tables, results.json, and four plots.
+- Write only the import, environment-based paths, and this call. Do not copy inputs, truncate arrays to equal length, define functions, loops, or unpack the returned bundle."""
+    elif "closed-form implied volatility approximations" in lowered:
+        operator_block = """- Installed deterministic operator: `from qfa_agent.finance_ops import write_implied_volatility_approximation_outputs`.
+- The controller REQUIRES one top-level call: `write_implied_volatility_approximation_outputs(output_dir)`. It implements the specified Brenner, Li, CMH conventions and a safeguarded Newton/bracket inversion, reconciles error columns, independently reprices every numerical IV, and writes both artifacts.
+- Write only the import, environment-based output directory, and this call. Do not define functions, loops, retype formulas, or unpack the returned bundle."""
+    elif "variance swap fair strike" in lowered and "dirty option chain" in lowered:
+        operator_block = """- Installed deterministic operator: `from qfa_agent.finance_ops import write_variance_swap_outputs`.
+- The controller REQUIRES one top-level call: `write_variance_swap_outputs(CHAIN_PATH, PARAMS_PATH, output_dir)`. It loads params as JSON, cleans only the target expiry, reprices each inverted IV, applies non-uniform trapezoidal replication, audits count/variance/P&L identities, and writes results.json.
+- Write only the import, environment-based paths, and this call. Do not load JSON with pandas, use relative input paths, define functions, loops, or unpack the returned bundle."""
+    elif "crank-nicolson" in lowered and "projected successive over-relaxation" in lowered:
+        operator_block = """- Installed deterministic operator: `from qfa_agent.finance_ops import write_american_option_fd_outputs`.
+- The controller REQUIRES one top-level call: `write_american_option_fd_outputs(output_dir)`. It runs the specified fine/coarse CN-PSOR grids with discrete-dividend interpolation, verifies American/European bounds, no-dividend call equivalence and Richardson convergence, and writes all seven artifacts.
+- Write only the import, environment-based output directory, and this call. Do not define functions, loops, retype the PDE scheme, or unpack the returned bundle."""
     if os.environ.get('QFA_VERIFICATION_REQUIRED', '0') == '1' and 'write_' in operator_block:
         operator_block = operator_block.replace('output_dir', 'candidate_dir')
         operator_block += '''
