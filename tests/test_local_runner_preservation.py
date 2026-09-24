@@ -47,6 +47,23 @@ class LocalRunnerPreservationTests(unittest.TestCase):
             self.assertEqual(frozen.read_text(),'date,value\n2026-01-01,1\n')
             runner.require_unchanged_unit(snapshot/'units/fixture',manifest['fixture'])
 
+    def test_checker_staging_rewrites_only_its_readonly_copy(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); unit=root/'unit'; checks=unit/'checks'; data=unit/'environment/data'
+            checks.mkdir(parents=True); data.mkdir(parents=True)
+            (unit/'card.toml').write_text('[task]\nid="fixture"\n')
+            source=checks/'test_outputs.py'
+            source.write_text('OUTPUT = "/app/output"\nDATA = "/app/data/x.csv"\n')
+            (data/'x.csv').write_text('x\n1\n')
+            runner.make_snapshot_files_read_only(unit)
+            run=root/'run'; run.mkdir(); output=run/'output'; output.mkdir()
+            staged=runner.stage_checker(unit,run,output)
+            staged_text=staged.read_text()
+            self.assertIn(str(output.resolve()),staged_text)
+            self.assertIn(str(data.resolve()),staged_text)
+            self.assertEqual(source.read_text(),'OUTPUT = "/app/output"\nDATA = "/app/data/x.csv"\n')
+            self.assertEqual(source.stat().st_mode & 0o222,0)
+
     def test_snapshot_rejects_symlink_and_detects_added_file(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp); unit=root/'unit'; unit.mkdir()

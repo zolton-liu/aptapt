@@ -141,6 +141,10 @@ def stage_checker(unit: Path, run_dir: Path, output_dir: Path) -> Path:
     for path in checks.rglob("*.py"):
         original = path.read_text(encoding="utf-8")
         rewritten = _replace_container_paths(original, replacements)
+        # Input snapshots are deliberately read-only. copytree preserves that
+        # mode, but this is a private verifier copy whose container paths must
+        # be rewritten before execution.
+        path.chmod(path.stat().st_mode | 0o200)
         path.write_text(rewritten, encoding="utf-8")
     return checks / "test_outputs.py"
 
