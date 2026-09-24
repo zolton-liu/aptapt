@@ -159,6 +159,10 @@ Common method
    replace_text only when the exact old text is known from a recent read or tool action.
    If a match is absent/non-unique, use replace_lines with the exact inclusive line range
    shown by read_file; do not guess another substring.
+   For a faulty top-level function in valid Python, prefer replace_function with its name,
+   the entire new def (including decorators), and the current source_sha256 copied from
+   read_file or repair_context. This preserves surrounding code without guessing line ranges.
+   Duplicate or reassigned names and stale hashes are rejected; read the current source first.
 7. Before the first run, check that every imported module and every output serializer is present.
    After a failed run, use the traceback: make one precise repair and immediately rerun. If an
    exact replacement is not unique, read the relevant source slice. Never submit a compact-action
@@ -210,6 +214,7 @@ Tools
 - copy_file: {{"source":"input/...py","destination":"scratch/solve.py","overwrite":false}}
 - replace_text: {{"path":"scratch/... or output/...","old":"exact unique text","new":"replacement"}}
 - replace_lines: {{"path":"scratch/... or output/...","start_line":10,"end_line":14,"content":"replacement"}}
+- replace_function: {{"path":"scratch/solve.py","name":"compute","expected_sha256":"current full-file source_sha256","content":"def compute(inputs):\\n    ..."}}
 - run_python: {{"script":"scratch/...py or output/...py","args":["optional"],"timeout_sec":120}}
 - run_pytest: {{"paths":["scratch/test_solution.py"],"timeout_sec":120}}
 - validate_outputs: {{}}

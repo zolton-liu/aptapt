@@ -102,7 +102,7 @@ class ContextManager:
         # Keep actionable evidence even when the verbose output is offloaded.
         preview = {key: bounded_text(str(data[key]), 600) for key in (
             'error', 'source_context', 'required_next_step', 'issues', 'output',
-            'content', 'controller_auto_run', 'controller_post_run_validation'
+            'content', 'source_sha256', 'controller_auto_run', 'controller_post_run_validation'
         ) if key in data}
         for key in ('repair_context', 'stage_evidence'):
             if isinstance(data.get(key), dict):

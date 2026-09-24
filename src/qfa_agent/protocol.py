@@ -88,7 +88,7 @@ def parse_action(response: str | dict[str, Any]) -> Action:
                 tool="read_file",
                 arguments={"path": path, "start_line": 1, "end_line": 500},
             )
-    if tool.strip() == "replace_lines" and "content" not in arguments and "content_record" in arguments:
+    if tool.strip() in {"replace_lines", "replace_function"} and "content" not in arguments and "content_record" in arguments:
         path = arguments.get("path")
         if isinstance(path, str) and path:
             return Action(

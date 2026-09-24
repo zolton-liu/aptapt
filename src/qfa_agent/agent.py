@@ -182,9 +182,15 @@ class CodingAgent:
                 if current.count(old) != 1:
                     return None
                 candidate = current.replace(old, new, 1)
+            elif action.tool == 'replace_function':
+                from .function_edit import replace_function_source
+                _, path = workspace.resolve('scratch/solve.py')
+                candidate = replace_function_source(path.read_bytes().decode('utf-8'),
+                    action.arguments.get('name'), action.arguments.get('content'),
+                    action.arguments.get('expected_sha256'))
             else:
                 return None
-        except (WorkspaceError, OSError, UnicodeError):
+        except (WorkspaceError, OSError, UnicodeError, ValueError, SyntaxError):
             return None
         return hashlib.sha256(candidate.encode("utf-8")).hexdigest()
 
@@ -525,7 +531,7 @@ class CodingAgent:
             # A failed edit is invalid for the observed target version, not
             # forever: a later genuine edit may make its match/range valid.
             edit_version = None
-            if action.tool in {'write_file', 'replace_text', 'replace_lines', 'copy_file'}:
+            if action.tool in {'write_file', 'replace_text', 'replace_lines', 'copy_file', 'replace_function'}:
                 try:
                     _, edit_target = workspace.resolve(
                         str(action.arguments.get('path', action.arguments.get('destination', ''))),
@@ -616,7 +622,7 @@ class CodingAgent:
                         )
                     },
                 )
-            elif action.tool in {"write_file", "replace_text", "replace_lines", "copy_file"} and failed_edit_fingerprints.get(failed_edit_key, 0):
+            elif action.tool in {"write_file", "replace_text", "replace_lines", "copy_file", "replace_function"} and failed_edit_fingerprints.get(failed_edit_key, 0):
                 outcome = ToolOutcome(
                     False,
                     "this exact edit already failed earlier; repeating it cannot change the file",
@@ -685,7 +691,7 @@ class CodingAgent:
                         # change the data. Do not let note-taking reset stalls.
                         if action.tool != 'revise_method':
                             actions_without_mutation.clear()
-                    if action.tool in {"write_file", "replace_text", "replace_lines", "copy_file"}:
+                    if action.tool in {"write_file", "replace_text", "replace_lines", "copy_file", "replace_function"}:
                         path = str(
                             action.arguments.get(
                                 "path", action.arguments.get("destination", "")
@@ -703,10 +709,10 @@ class CodingAgent:
                         outcome = self._postprocess_python_outcome(
                             workspace, router, action, outcome, required_files
                         )
-                    if action.tool in {"replace_text", "replace_lines"} and not outcome.ok:
+                    if action.tool in {"replace_text", "replace_lines", "replace_function"} and not outcome.ok:
                         outcome.data["required_next_step"] = (
-                            "Read the relevant source slice and use replace_lines with exact line "
-                            "numbers, or call write_file with overwrite=true for a whole-file replacement."
+                            "Read the current source and hash. Prefer replace_function for one complete "
+                            "top-level function, or use exact replace_text/replace_lines for syntax repairs."
                         )
                     if action.tool == "run_python":
                         solver_dirty = False
@@ -729,7 +735,7 @@ class CodingAgent:
             # turn whose only action was run_python. Execute it immediately to
             # preserve scarce model calls for semantic repairs.
             if (
-                action.tool in {"write_file", "replace_text", "replace_lines"}
+                action.tool in {"write_file", "replace_text", "replace_lines", "replace_function"}
                 and outcome.ok
                 and str(action.arguments.get("path", "")).lower() == "scratch/solve.py"
             ):
@@ -851,7 +857,7 @@ class CodingAgent:
             if controller_events:
                 outcome.data["workflow"] = workflow.snapshot()
                 outcome.data["workflow_guidance"] = workflow.guidance()
-            if action.tool in {"write_file", "replace_text", "replace_lines", "copy_file"} and not outcome.ok:
+            if action.tool in {"write_file", "replace_text", "replace_lines", "copy_file", "replace_function"} and not outcome.ok:
                 failed_edit_fingerprints[failed_edit_key] = failed_edit_fingerprints.get(failed_edit_key, 0) + 1
 
             failed_outcomes = [outcome, *(item[1] for item in controller_events)]

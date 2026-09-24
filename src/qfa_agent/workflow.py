@@ -19,43 +19,71 @@ from .types import Action, ToolOutcome
 
 
 _INSPECTION_TOOLS = {"list_files", "read_file", "search_files"}
-_MUTATION_TOOLS = {"write_file", "replace_text", "replace_lines", "copy_file"}
+_MUTATION_TOOLS = {"write_file", "replace_text", "replace_lines", "copy_file", "replace_function"}
+
+
+def _failure_diagnostic(outcome: ToolOutcome) -> tuple[str, str]:
+    """Prefer a recorded stage/terminal exception over paths and source text.
+
+    Warnings and earlier exceptions in a chained traceback remain in the raw
+    observation; they must not replace the exception that stopped this run.
+    """
+    stages = outcome.data.get('stage_evidence', {}).get('stages', [])
+    failed = [s.get('error', '') for s in stages if s.get('status') == 'failed']
+    sources = [*reversed(failed), outcome.data.get('error', ''),
+               outcome.data.get('output', ''), outcome.summary]
+    pattern = re.compile(
+        r'^(?:[A-Za-z_]\w*\.)*([A-Za-z_]\w*(?:Error|Exception)|KeyboardInterrupt)'
+        r'(?::\s*(.*))?$', re.MULTILINE)
+    for source in sources:
+        matches = list(pattern.finditer(str(source)))
+        if matches:
+            match = matches[-1]
+            return match.group(1).lower(), (match.group(2) or '').lower()
+    # Unstructured stdout is not reliable failure evidence: it may contain
+    # filenames, program source, data columns or warnings unrelated to failure.
+    return '', str(outcome.data.get('error') or outcome.summary).lower()
 
 
 def classify_failure(outcome: ToolOutcome) -> str:
-    """Classify tool feedback without spending another model request."""
-
-    text = "\n".join(
-        (
-            outcome.summary,
-            str(outcome.data.get("error", "")),
-            str(outcome.data.get("output", "")),
-        )
-    ).lower()
-    if outcome.data.get("timed_out") or "timed out" in text or "timeout" in text:
+    """Classify the observed failure, not incidental words in its traceback."""
+    exception, text = _failure_diagnostic(outcome)
+    if outcome.data.get("timed_out") or exception == 'timeouterror':
         return "timeout"
-    if "syntaxerror" in text or "syntax validation" in text or "indentationerror" in text:
+    if exception in {'syntaxerror', 'indentationerror', 'taberror'} or "syntax validation" in text:
         return "syntax"
-    if "modulenotfounderror" in text or "importerror" in text:
+    if exception in {'modulenotfounderror', 'importerror'}:
         return "dependency"
-    if any(token in text for token in ("nameerror", "unboundlocalerror", "not defined")):
+    if exception in {'nameerror', 'unboundlocalerror'}:
         return "symbol"
-    if "filenotfounderror" in text or "path does not exist" in text or "no such file" in text:
+    if exception == 'filenotfounderror' or "path does not exist" in text or "no such file" in text:
         return "path"
-    if any(token in text for token in ("keyerror", "usecols", "column", "schema", "header")):
-        return "schema"
-    if any(token in text for token in ("alignment mismatch", "could not be broadcast", "shapes (")):
-        return "alignment"
-    if any(token in text for token in ("nan", "non-finite", "infinite", "overflow", "singular", "converge")):
-        return "numeric"
-    if any(token in text for token in ("typeerror", "valueerror", "dtype", "could not convert")):
+    if exception in {'typeerror', 'attributeerror', 'auditprotocolerror', 'verificationinputerror'}:
         return "type"
-    if any(token in text for token in ("assertionerror", "assert ", "self-authored tests failed")):
-        return "invariant"
-    if any(token in text for token in ("memoryerror", "resource", "killed")):
+    if exception == 'indexerror':
+        return "alignment"
+    if exception in {'memoryerror', 'recursionerror'}:
         return "resource"
-    if "protocolerror" in text or "json tool action" in text:
+    if exception == 'protocolerror' or "json tool action" in text:
         return "protocol"
+    if exception == 'assertionerror':
+        return "invariant"
+    if exception == 'keyerror' or re.search(r'\b(usecols|columns?|schema|headers?)\b', text):
+        return "schema"
+    if any(token in text for token in ("alignment mismatch", "could not be broadcast", "shapes (", "does not match length of index")):
+        return "alignment"
+    if (exception in {'overflowerror', 'floatingpointerror', 'zerodivisionerror', 'linalgerror'}
+            or re.search(r'\b(nan|inf|infinite|infinity|non[- ]finite|overflow|singular)\b', text)
+            or re.search(r'\b(?:did not|failed to|does not) converge\b|\bnon[- ]convergence\b', text)):
+        return "numeric"
+    if exception == 'valueerror' or re.search(r'\bdtype\b|could not convert', text):
+        return "type"
+    if "self-authored tests failed" in text:
+        return "invariant"
+    if not exception and re.search(r'\btimed out\b|\btimeout\b', text):
+        return "timeout"
+    if not exception and re.search(r'\bresource\b|\bkilled\b', text):
+        return "resource"
     if "output" in text and ("missing" in text or "empty" in text or "failed" in text):
         return "deliverable"
     return "unknown"

@@ -1,5 +1,6 @@
 """Whole-controller verification flows using scripted replies, not real model calls."""
 import json
+import hashlib
 import os
 import tempfile
 import unittest
@@ -113,3 +114,32 @@ def audit(inputs,result):
         self.assertFalse(result.starter_used)
         self.assertEqual(len(model.requests),2)
         self.assertEqual(json.loads((self.root/'output/results.json').read_text()),{'var':1.5,'es':2.5})
+
+    def test_function_edit_auto_runs_and_preserves_crosscheck_history(self):
+        source = SOURCE.replace('ERROR_OFFSET', '1')
+        start = SOURCE.index('def compute(inputs):')
+        end = SOURCE.index('def audit(inputs,result):')
+        compute = SOURCE[start:end].replace('ERROR_OFFSET', '0')
+        action = {'tool': 'replace_function', 'arguments': {'path': 'scratch/solve.py',
+            'name': 'compute', 'content': compute,
+            'expected_sha256': hashlib.sha256(source.encode()).hexdigest()}}
+        result, model = self.solve([self.write(1), action, {'tool':'finish','arguments':{}}])
+        self.assertTrue(result.succeeded, result.message)
+        self.assertEqual(len(model.requests), 3)
+        receipts = [json.loads(p.read_text()) for p in (self.root/'scratch/.agent/stages').glob('*.json')]
+        self.assertEqual(sorted(r['complete'] for r in receipts), [False, True])
+        self.assertEqual(len({r['source_sha256'] for r in receipts}), 2)
+        memory = json.loads((self.root/'scratch/.agent/memory.json').read_text())
+        self.assertTrue(any(f['status'] == 'resolved' for f in memory['all_bounded_failures']))
+
+    def test_function_edit_cannot_restore_a_previously_failed_version(self):
+        source = SOURCE.replace('ERROR_OFFSET', '2')
+        start, end = SOURCE.index('def compute(inputs):'), SOURCE.index('def audit(inputs,result):')
+        action = {'tool': 'replace_function', 'arguments': {'path': 'scratch/solve.py',
+            'name': 'compute', 'content': SOURCE[start:end].replace('ERROR_OFFSET','1'),
+            'expected_sha256': hashlib.sha256(source.encode()).hexdigest()}}
+        result, _ = self.solve([self.write(1), self.write(2,overwrite=True), action,
+                                {'tool':'finish','arguments':{}}])
+        self.assertFalse(result.succeeded)
+        self.assertEqual((self.root/'scratch/solve.py').read_text(), source)
+        self.assertIn('restores a previously executed source version', (self.root/'trajectory.jsonl').read_text())

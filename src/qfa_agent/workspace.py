@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .executor import run_bounded
+from .function_edit import replace_function_source
 from .types import Action, OutputValidation, ToolOutcome
 
 
@@ -608,6 +609,17 @@ class TaskWorkspace:
         _atomic_write(path, candidate.encode("utf-8"))
         return path
 
+    def replace_function(self, raw: str, name: str, content: str, expected_sha256: str) -> Path:
+        _, path = self.resolve(raw, write=True)
+        if not path.is_file() or path.suffix.lower() != '.py':
+            raise WorkspaceError('replace_function requires a writable regular Python file')
+        # Decode exact bytes: universal newline translation would invalidate a
+        # hash received from read_file on CRLF source.
+        source = path.read_bytes().decode('utf-8')
+        candidate = replace_function_source(source, name, content, expected_sha256)
+        _atomic_write(path, candidate.encode('utf-8'))
+        return path
+
     def replace_lines(
         self, raw: str, start_line: int, end_line: int, content: str
     ) -> Path:
@@ -1006,7 +1018,7 @@ class ToolRouter:
         # identical copies/writes as progress previously hid multi-action loops.
         target = None
         before = None
-        if action.tool in {'write_file', 'copy_file', 'replace_text', 'replace_lines'}:
+        if action.tool in {'write_file', 'copy_file', 'replace_text', 'replace_lines', 'replace_function'}:
             raw = action.arguments.get('path', action.arguments.get('destination', ''))
             try:
                 _, target = self.workspace.resolve(raw, write=True, must_exist=False)
@@ -1043,7 +1055,9 @@ class ToolRouter:
                     int(args.get("start_line", 1)),
                     int(args.get("end_line", 240)),
                 )
-                return ToolOutcome(True, f"read {path}", {"content": content})
+                _, resolved = self.workspace.resolve(path)
+                return ToolOutcome(True, f"read {path}", {"content": content,
+                    "source_sha256": hashlib.sha256(resolved.read_bytes()).hexdigest()})
             if action.tool == "search_files":
                 area = self._str(args, "area", "input")
                 query = self._str(args, "query")
@@ -1157,6 +1171,13 @@ class ToolRouter:
                     {"bytes": written.stat().st_size, "sha256": hashlib.sha256(written.read_bytes()).hexdigest()},
                     mutated=True,
                 )
+            if action.tool == 'replace_function':
+                path = self._str(args, 'path')
+                written = self.workspace.replace_function(path, self._str(args, 'name'),
+                    self._str(args, 'content'), self._str(args, 'expected_sha256'))
+                return ToolOutcome(True, f'updated function in {path}',
+                    {'bytes': written.stat().st_size,
+                     'sha256': hashlib.sha256(written.read_bytes()).hexdigest()}, mutated=True)
             if action.tool == "replace_lines":
                 path = self._str(args, "path")
                 content = self._str(args, "content")

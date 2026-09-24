@@ -26,6 +26,14 @@ class VerificationInputError(ValueError):
     """Malformed verification inputs, not evidence that a method is unsuitable."""
 
 
+class AuditProtocolError(VerificationInputError):
+    """All bounded audit assembly issues, without discarding any failed check."""
+
+    def __init__(self, problems):
+        self.problems = tuple(problems)
+        super().__init__('audit protocol: ' + '; '.join(self.problems))
+
+
 @dataclass(frozen=True)
 class Check:
     layer: str
@@ -58,9 +66,24 @@ class AuditReport:
                            and isinstance(c.scope, str) and len(c.scope) <= 500 for c in self.checks)):
             raise ValueError('audit requires bounded typed checks with executable evidence, not bool claims')
         if len({c.name for c in self.checks}) != len(self.checks):
-            raise ValueError('audit check names must be unique')
-        if any(not any(c.layer == layer for c in self.checks) for layer in LAYERS):
-            raise ValueError('audit must cover structure, computation and cross_check; missing is not passing')
+            duplicates = sorted({c.name for c in self.checks
+                                 if sum(other.name == c.name for other in self.checks) > 1})
+        else:
+            duplicates = []
+        missing = [layer for layer in LAYERS if not any(c.layer == layer for c in self.checks)]
+        problems = []
+        if duplicates:
+            problems.append('audit check names must be unique; duplicates=' + repr(duplicates)
+                            + '. Pass explicit name= for separate structure/computation checks')
+        if missing:
+            problems.append('audit must cover structure, computation and cross_check; '
+                            'missing=' + repr(missing) + '; missing is not passing')
+        if problems:
+            failed = [c for c in self.checks if not c.passed]
+            if failed:
+                problems.append('already failed executable checks: ' + '; '.join(
+                    f'{c.name}: {c.evidence[:180]}' for c in failed[:4]))
+            raise AuditProtocolError(problems)
 
     def as_dict(self):
         failed = [c for c in self.checks if not c.passed]

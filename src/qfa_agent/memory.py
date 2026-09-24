@@ -56,7 +56,7 @@ class WorkingMemory:
         self.actions[:] = self.actions[-12:]
         versioned = os.environ.get('QFA_VERSIONED_MEMORY', '1').lower() not in {'0', 'false', 'off'}
         if versioned:
-            edits = {'write_file', 'replace_text', 'replace_lines', 'copy_file'}
+            edits = {'write_file', 'replace_text', 'replace_lines', 'copy_file', 'replace_function'}
             if action.tool in edits and outcome.mutated:
                 try:
                     _, edited_path = self.workspace.resolve(target)
