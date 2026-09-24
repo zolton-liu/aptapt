@@ -199,6 +199,8 @@ def main() -> int:
         json.dumps(
             {
                 "execution_mode": "local-public",
+                "development_provenance": (json.loads(Path(os.environ['QFA_DEV_PROVENANCE_PATH']).read_text())
+                                           if os.environ.get('QFA_DEV_PROVENANCE_PATH') else None),
                 "three_layer_verification_required": os.environ.get('QFA_VERIFICATION_REQUIRED', '0') == '1',
                 "experience_snapshot": str(experience_snapshot) if experience_snapshot else None,
                 "experience_catalog_sha256": experience_digest,

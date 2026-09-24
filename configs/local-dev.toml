@@ -1,0 +1,15 @@
+# Local development only; never read by the official solve entry point.
+[model]
+endpoint = "http://127.0.0.1:11434"
+name = "qwen2.5-coder:14b"
+digest = "9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849"
+
+[evaluation]
+max_steps = 18
+max_response_tokens = 4000
+model_timeout_sec = 360
+task_timeout_sec = 900
+verifier_timeout_sec = 300
+context_max_tokens = 16000
+verification_required = true
+experience_enabled = true

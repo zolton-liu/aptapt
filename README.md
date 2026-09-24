@@ -75,6 +75,40 @@ header。这里没有照搬昂贵的多 Agent 对话，而是让一个 House mod
 
 ## 本地快速演示
 
+### 日常开发：本地模型 + Git 检查点
+
+当前开发分支是 `dev/local-verifier`；`checkpoint/v6.2-submitted-20260924` 保留已提交比赛版本。
+恢复的 v6.3–v6.5 检查点见 [版本恢复记录](reports/version-recovery-20260924.md)。
+它们是从现存副本恢复的提交，不代表完整的历史编辑记录；没有可靠 v5.6 源码，不能精确回退。
+
+本地配置在 `configs/local-dev.toml`：使用已安装、固定 digest 的 `qwen2.5-coder:14b`，
+不自动下载模型，不回退到云端，也不改变官方 `solve` 的 House 配置。
+
+```bash
+.venv-eval/bin/python scripts/dev_local.py check
+.venv-eval/bin/python scripts/dev_local.py smoke
+```
+
+`check` 不生成；`smoke` 只验证一次小型真实模型响应，不是金融题评测。
+完整评测先完成代码测试、审查并提交 Git，再选定题单和一个全新的实验名：
+
+```bash
+PYTHONPATH=src .venv-eval/bin/python -m pytest
+git status --short
+# 审查后仅添加所需代码、测试、配置和摘要，再 git commit。
+.venv-eval/bin/python scripts/dev_local.py eval \
+  --experiment local-verifier-first-batch \
+  --task-list configs/random10-20260923.txt
+```
+
+开发入口拒绝未提交改动和已有实验名；从 Git commit 导出源码，冻结题单，并让 runner 冻结
+输入及 checker。配置、提交号、模型 digest、逐文件哈希存入 `work/local-runs/<实验名>/provenance.json`，
+同时写进 `eval_runs/<实验名>/run_config.json`。后续编辑主目录不改变该批正在执行的源码。
+严格验证与只读经验默认启用；旧回放、其他模型适配器及遗留 QFA 配置不会混入本地实验。
+这只是本地公开集口径，不是官方 House 模型或隐藏集成绩。原始轨迹和提交凭据不进入 Git。
+
+### 无模型演示
+
 演示使用固定模型响应，不需要网络或模型：
 
 ```bash
