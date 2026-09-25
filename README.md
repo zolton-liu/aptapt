@@ -55,10 +55,12 @@ instruction.md + card.toml + environment/data/*
 外层仍保留 mini-swe-agent / mini-coding-agent 的有限循环、结构化工具、独立子进程、错误反馈
 和轨迹；内层会按官方十类任务切换求解架构、金融不变量、检查预算和修复策略。参考公开金融
 Agent 后又加入显式状态图、确定性失败分类、重复失败升级、最终风险闸门和带 SHA-256/表形状的
-交付物 provenance，并开始提供可复用的纯 Python 金融计算算子（目前包括有序收益面板清洗与
-历史 VaR）。运行前还生成有界 CSV/JSON 数据概况，减少模型把 House 请求浪费在重复读取
-header。这里没有照搬昂贵的多 Agent 对话，而是让一个 House model 依次承担构建者、执行者、
-修复者和风控审计者角色；仍不加入 UI、长期记忆、任意 Bash 或公网检索。
+交付物 provenance，并提供经过公开 checker 工程验证的金融计算算子。当前覆盖有序收益面板、
+历史 VaR、Fama-French/Newey-West、隐含波动率近似、几何均值回复跳扩散、美式期权有限差分、
+方差互换复制及 Asian option Levy/Curran。模型只生成短任务适配器，工具策略拒绝无证据探索、
+重复执行和不合规的现场重写。运行前还生成有界 CSV/JSON 数据概况，减少模型把 House 请求浪费
+在重复读取 header。这里没有照搬昂贵的多 Agent 对话，而是让一个 House model 依次承担构建者、
+执行者、修复者和风控审计者角色；仍不加入 UI、模型权重训练、任意 Bash 或公网检索。
 
 ## 安全边界
 
@@ -78,6 +80,8 @@ header。这里没有照搬昂贵的多 Agent 对话，而是让一个 House mod
 ### 日常开发：本地模型 + Git 检查点
 
 当前开发分支是 `dev/local-verifier`；`checkpoint/v6.2-submitted-20260924` 保留已提交比赛版本。
+准备上传的当前版本为 **v0.8.0**；对应固定十题本地公开集严格 pass@1 为 **8/10**，完整审计见
+[v6.8 结果报告](reports/v6.8-random10-20260925-results.md)。
 恢复的 v6.3–v6.5 检查点见 [版本恢复记录](reports/version-recovery-20260924.md)。
 它们是从现存副本恢复的提交，不代表完整的历史编辑记录；没有可靠 v5.6 源码，不能精确回退。
 
@@ -185,7 +189,10 @@ docker build -t finance-bench-sandbox:latest -f docker/sandbox.Dockerfile .
 再回到本项目：
 
 ```bash
-docker build -t agenthon-t1-minimal:dev .
+docker build \
+  --build-arg AGENT_VERSION=0.8.0 \
+  --build-arg VCS_REF="$(git rev-parse HEAD)" \
+  -t agenthon-t1-minimal:0.8.0 .
 ```
 
 `Dockerfile` 继承官方 Python 3.13 金融栈，并包含强制 label：
@@ -208,7 +215,7 @@ docker run --rm --network=none \
   -v "$ROOT/examples/demo_responses.json:/fixtures/demo_responses.json:ro" \
   -v "$OUT:/app/output" \
   -v "$OUT:/output" \
-  agenthon-t1-minimal:dev \
+  agenthon-t1-minimal:0.8.0 \
   solve --task-dir /input --out /app/output
 ```
 
@@ -280,7 +287,14 @@ PYTHONPATH=src python -m qfa_agent.descriptor submission.json --check
 下一步最有价值的改进是：为每类加入少量通用计算骨架；让模型生成任务专属 invariant tests；
 在全部 public units 上按失败类别建立回归集，并在真实 House endpoint 可用后重新校准轮数与输出长度。
 
-当前里程碑（2026-09-23）：整理后的 87 题本地公开开发基线为
+当前里程碑（2026-09-25）：固定十题、固定 `qwen2.5-coder:14b`、starter 关闭、
+失败题不重跑的 v6.8 整体回归为 **8/10（80%）**，相比完整 v6.6 基线 2/10 净增 6 题。
+10 个唯一 ID、原始 checker、退出码、输入/源码哈希和 summary 已完整核对；详见
+[v6.8 结果报告](reports/v6.8-random10-20260925-results.md)。剩余失败集中在 local-vol 的修复协议
+混淆，以及 DCC-GARCH 的 4,000-token 截断响应循环。该结果来自反复观察过的本地公开题，
+不是官方 House/隐藏集成绩，不能直接外推到未见题。
+
+上一里程碑（2026-09-23）：整理后的 87 题本地公开开发基线为
 `workflow-v5.6-all87-canonical-coder14b`，11/87（12.64%）。新增预算化上下文、
 长观察落盘、带源码版本和验证状态的任务记忆、通用修复规则检索，以及自建测试失败门槛。
 完整测试 110 passed，87/87 初始任务上下文可装入默认预算。
