@@ -281,6 +281,99 @@ class CodingAgent:
             return None
 
     @staticmethod
+    def _tool_state_policy(
+        action: Action,
+        *,
+        solver_exists: bool,
+        required_operator: str | None,
+        last_solver_execution_failed: bool,
+    ) -> ToolOutcome | None:
+        """Reject actions that cannot advance the current solver state.
+
+        The prompt already contains the complete inventory and bounded data
+        profile.  In particular, a task backed by a validated high-level
+        operator needs one small adapter before any inspection or execution is
+        useful.  Returning a typed policy observation (rather than a generic
+        tool failure) also lets the workflow keep protocol mistakes separate
+        from implementation and method failures.
+        """
+
+        target = str(
+            action.arguments.get(
+                "path",
+                action.arguments.get(
+                    "destination", action.arguments.get("script", "")
+                ),
+            )
+        ).lower()
+        if not solver_exists and required_operator is not None:
+            if action.tool == "write_file" and target == "scratch/solve.py":
+                return None
+            return ToolOutcome(
+                False,
+                "required-operator task must bootstrap scratch/solve.py before any other tool",
+                {
+                    "controller_policy": "required-operator-bootstrap",
+                    "policy_phase": "build",
+                    "required_operator": required_operator,
+                    "allowed_next_tools": ["write_file"],
+                    "required_next_step": (
+                        "Use write_file now (not read, replace, copy, list, run, or finish) "
+                        "to create scratch/solve.py as a short top-level adapter importing and "
+                        f"calling qfa_agent.finance_ops.{required_operator} exactly once."
+                    ),
+                },
+            )
+
+        missing_solver_actions = {"replace_text", "replace_lines", "replace_function"}
+        if not solver_exists and (
+            action.tool in missing_solver_actions and target == "scratch/solve.py"
+            or action.tool == "read_file" and target == "scratch/solve.py"
+            or action.tool == "run_python" and target == "scratch/solve.py"
+        ):
+            return ToolOutcome(
+                False,
+                "scratch/solve.py does not exist, so it cannot be read, edited, or run",
+                {
+                    "controller_policy": "missing-solver",
+                    "policy_phase": "build",
+                    "allowed_next_tools": ["write_file"],
+                    "required_next_step": (
+                        "Use write_file to create one complete scratch/solve.py from the supplied "
+                        "instruction, inventory, and data profile."
+                    ),
+                },
+            )
+
+        # After a real operator-adapter execution, the traceback and current
+        # source are the relevant evidence.  Starting a fresh inventory/data
+        # exploration is a control-loop reset, not a repair.
+        if required_operator is not None and last_solver_execution_failed:
+            unrelated_read = action.tool == "read_file" and target != "scratch/solve.py"
+            if action.tool in {"list_files", "search_files", "copy_file"} or unrelated_read:
+                return ToolOutcome(
+                    False,
+                    "repair must use the existing execution evidence instead of restarting exploration",
+                    {
+                        "controller_policy": "repair-evidence",
+                        "policy_phase": "repair",
+                        "required_operator": required_operator,
+                        "allowed_next_tools": [
+                            "read_file:scratch/solve.py",
+                            "replace_text",
+                            "replace_lines",
+                            "replace_function",
+                            "write_file",
+                        ],
+                        "required_next_step": (
+                            "Use the latest traceback, source_context, and current scratch/solve.py "
+                            "to make one bounded repair. Do not recopy inputs or relist the workspace."
+                        ),
+                    },
+                )
+        return None
+
+    @staticmethod
     def _model_context(
         messages: list[Message],
         *,
@@ -603,9 +696,15 @@ class CodingAgent:
             else:
                 identical_count = 1
                 last_fingerprint = fingerprint
+            current_solver_digest = self._current_solver_digest(workspace)
+            state_policy = self._tool_state_policy(
+                action,
+                solver_exists=current_solver_digest is not None,
+                required_operator=required_operator,
+                last_solver_execution_failed=last_solver_execution_failed,
+            )
             guarded = workflow.guard(action)
             candidate_solver_digest = self._candidate_solver_digest(workspace, action)
-            current_solver_digest = self._current_solver_digest(workspace)
             # A failed edit is invalid for the observed target version, not
             # forever: a later genuine edit may make its match/range valid.
             edit_version = None
@@ -641,31 +740,23 @@ class CodingAgent:
                     False,
                     f"invalid required-operator adapter: {operator_adapter_issue}",
                     {
+                        "controller_policy": "required-operator-adapter",
+                        "policy_phase": (
+                            "repair" if current_solver_digest is not None else "build"
+                        ),
                         "required_operator": required_operator,
+                        "allowed_next_tools": ["write_file"],
                         "required_next_step": (
-                            "Rewrite scratch/solve.py as a top-level adapter under 1800 bytes that "
+                            "Use write_file to rewrite scratch/solve.py as a top-level adapter under 1800 bytes that "
                             f"imports and calls qfa_agent.finance_ops.{required_operator} exactly once. "
                             "Do not define functions, loops, or reimplement formulas; the operator writes outputs."
                         ),
                     },
                 )
+            elif state_policy is not None:
+                outcome = state_policy
             elif guarded is not None:
                 outcome = guarded
-            elif (
-                action.tool == "run_python"
-                and str(action.arguments.get("script", "")).lower() == "scratch/solve.py"
-                and current_solver_digest is None
-            ):
-                outcome = ToolOutcome(
-                    False,
-                    "cannot run before scratch/solve.py exists",
-                    {
-                        "required_next_step": (
-                            "Write a complete scratch/solve.py now from the supplied instruction, "
-                            "inventory and data profile."
-                        )
-                    },
-                )
             elif is_inspection and fingerprint in inspection_cache:
                 # Context compaction can evict a previous read. Return its
                 # actual evidence instead of claiming it is still visible.
@@ -771,8 +862,9 @@ class CodingAgent:
                         # direct source edits. Never replay stale output reads.
                         inspection_cache.clear()
                         # A hypothesis/observation file does not repair code or
-                        # change the data. Do not let note-taking reset stalls.
-                        if action.tool != 'revise_method':
+                        # change the data. Likewise, copying/creating a non-code
+                        # inspection artifact is not implementation progress.
+                        if action.tool != 'revise_method' and not is_inspection:
                             actions_without_mutation.clear()
                     if action.tool in {"write_file", "replace_text", "replace_lines", "copy_file", "replace_function"}:
                         path = str(

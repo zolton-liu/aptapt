@@ -351,8 +351,21 @@ class AgentIntegrationTests(unittest.TestCase):
                 TaskWorkspace(task_root, output, scratch),
                 Trajectory(scratch / "trace.jsonl"),
             )
-            self.assertTrue(result.succeeded)
+            self.assertFalse(result.succeeded)
             self.assertFalse((scratch / "solve.py").exists())
+            self.assertFalse((output / "results.json").exists())
+            events = [
+                json.loads(line)
+                for line in (scratch / "trace.jsonl").read_text().splitlines()
+            ]
+            self.assertTrue(
+                any(
+                    event.get("summary", "").startswith(
+                        "required-operator task must bootstrap"
+                    )
+                    for event in events
+                )
+            )
 
     def test_missing_script_failure_remains_recoverable(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

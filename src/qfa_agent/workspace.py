@@ -532,6 +532,11 @@ class TaskWorkspace:
         )
         if source_area != "input" or destination_area != "scratch":
             raise WorkspaceError("copy_file is limited to visible input -> scratch")
+        if source.suffix.lower() != ".py" or destination.suffix.lower() != ".py":
+            raise WorkspaceError(
+                "copy_file is only for visible Python templates; data files must remain "
+                "in input and be loaded by the generated solver using TASK_DIR"
+            )
         if source.name.lower() == "fetch_data.py":
             raise WorkspaceError(
                 "fetch_data.py is a dataset-provenance utility, not a solver template; "

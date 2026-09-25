@@ -176,6 +176,16 @@ class WorkflowController:
     def observe(self, action: Action, outcome: ToolOutcome) -> None:
         state = self.state
 
+        # Controller-policy rejections mean the requested action was never an
+        # implementation attempt or numerical experiment.  Keep them out of
+        # repair counters and failure memory so the next model turn receives
+        # the correct affordance instead of a fictitious runtime diagnosis.
+        if not outcome.ok and outcome.data.get("controller_policy"):
+            state.phase = str(outcome.data.get("policy_phase", "build"))
+            outcome.data["workflow"] = self.snapshot()
+            outcome.data["workflow_guidance"] = self.guidance()
+            return
+
         if action.tool in _MUTATION_TOOLS:
             if outcome.mutated:
                 state.validation_passed = False

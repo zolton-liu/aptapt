@@ -87,6 +87,51 @@ class EvidenceProgressTests(unittest.TestCase):
         self.assertIsNone(workflow.guard(Action('revise_method',PLAN)))
         self.assertTrue(workflow.state.executions_failed)
 
+    def test_required_operator_bootstrap_allows_only_solver_write(self):
+        operator = 'write_implied_volatility_approximation_outputs'
+        blocked = CodingAgent._tool_state_policy(
+            Action('list_files', {'area': 'input'}),
+            solver_exists=False,
+            required_operator=operator,
+            last_solver_execution_failed=False,
+        )
+        self.assertIsNotNone(blocked)
+        self.assertEqual(blocked.data['controller_policy'], 'required-operator-bootstrap')
+        self.assertEqual(blocked.data['allowed_next_tools'], ['write_file'])
+        allowed = CodingAgent._tool_state_policy(
+            Action('write_file', {'path': 'scratch/solve.py', 'content': '# adapter'}),
+            solver_exists=False,
+            required_operator=operator,
+            last_solver_execution_failed=False,
+        )
+        self.assertIsNone(allowed)
+
+    def test_missing_solver_edit_is_build_protocol_not_repair(self):
+        blocked = CodingAgent._tool_state_policy(
+            Action('replace_function', {
+                'path': 'scratch/solve.py', 'name': 'main', 'content': 'def main(): pass'
+            }),
+            solver_exists=False,
+            required_operator=None,
+            last_solver_execution_failed=False,
+        )
+        self.assertIsNotNone(blocked)
+        self.assertEqual(blocked.data['controller_policy'], 'missing-solver')
+        self.assertEqual(blocked.data['policy_phase'], 'build')
+
+    def test_failed_operator_adapter_repair_cannot_restart_exploration(self):
+        blocked = CodingAgent._tool_state_policy(
+            Action('copy_file', {
+                'source': 'input/data/template.py', 'destination': 'scratch/solve.py'
+            }),
+            solver_exists=True,
+            required_operator='write_fama_french_outputs',
+            last_solver_execution_failed=True,
+        )
+        self.assertIsNotNone(blocked)
+        self.assertEqual(blocked.data['controller_policy'], 'repair-evidence')
+        self.assertEqual(blocked.data['policy_phase'], 'repair')
+
     def test_stage_signature_has_actionable_error_without_calling_bad_function(self):
         script=self.root/'scratch/solve.py'; script.write_text('# fixture\n')
         def wrong_compute(inputs,data_path):

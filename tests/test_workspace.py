@@ -291,6 +291,22 @@ class WorkspaceTests(unittest.TestCase):
         self.assertIn("dataset-provenance utility", outcome.summary)
         self.assertFalse((self.scratch / "solve.py").exists())
 
+    def test_copy_file_rejects_data_as_fake_progress(self) -> None:
+        dataset = self.input / "data" / "prices.csv"
+        dataset.write_text("date,price\n2026-01-01,100\n", encoding="utf-8")
+        outcome = ToolRouter(self.workspace).dispatch(
+            Action(
+                "copy_file",
+                {
+                    "source": "input/data/prices.csv",
+                    "destination": "scratch/prices.csv",
+                },
+            )
+        )
+        self.assertFalse(outcome.ok)
+        self.assertIn("only for visible Python templates", outcome.summary)
+        self.assertFalse((self.scratch / "prices.csv").exists())
+
     def test_small_scratch_python_repair_can_auto_overwrite(self) -> None:
         target = self.scratch / "solve.py"
         target.write_text("value = 1\n", encoding="utf-8")

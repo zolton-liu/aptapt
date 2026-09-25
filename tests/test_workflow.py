@@ -51,6 +51,25 @@ class WorkflowControllerTests(unittest.TestCase):
         self.assertEqual(self.workflow.state.phase, "audit")
         self.assertIn("ES is at least VaR", outcome.data["workflow_guidance"])
 
+    def test_controller_policy_rejection_is_not_recorded_as_solver_failure(self) -> None:
+        outcome = ToolOutcome(
+            False,
+            "scratch/solve.py does not exist",
+            {
+                "controller_policy": "missing-solver",
+                "policy_phase": "build",
+                "required_next_step": "create the solver",
+            },
+        )
+        self.workflow.observe(
+            Action("run_python", {"script": "scratch/solve.py"}), outcome
+        )
+        self.assertEqual(self.workflow.state.phase, "build")
+        self.assertEqual(self.workflow.state.failed_runs, 0)
+        self.assertEqual(self.workflow.state.repair_attempts, 0)
+        self.assertEqual(self.workflow.state.last_failure_kind, "")
+        self.assertEqual(outcome.data["workflow"]["phase"], "build")
+
     def test_failure_taxonomy(self) -> None:
         self.assertEqual(
             classify_failure(ToolOutcome(False, "Python program failed", {"output": "SyntaxError"})),
