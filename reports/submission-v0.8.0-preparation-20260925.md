@@ -37,10 +37,10 @@
 - OCI 版本标签：`0.8.0`
 - OCI revision：`cd6e95b8ac7bde3b890848feadaa829f04911199`
 
-Docker Hub push 成功并返回上述 digest。随后从终端进行匿名 registry HEAD
-复核时，`auth.docker.io` 连续连接超时；因此不把该次网络检查写成成功的匿名
-远程拉取测试。此前同一公开仓库已验证为 public，正式上传前仍建议再按 digest
-执行一次无凭据拉取。
+Docker Hub push 成功并返回上述 digest。首次匿名 registry HEAD 复核遇到
+`auth.docker.io` 连接超时；随后使用全新的空 Docker 配置、无登录凭据按 digest
+执行 `docker pull --platform linux/amd64` 成功，并返回同一 digest。远程镜像的
+公开可拉取性已验证。
 
 ## 描述符和打包入口
 
