@@ -63,3 +63,22 @@ Docker Hub push 成功并返回上述 digest。首次匿名 registry HEAD 复核
 `submission.json` 与 `team-claim.json`，再上传到 CodaBench。不要直接上传
 `descriptor-draft.json`，也不要将 Team Key、team claim 或 submission ZIP
 提交到 Git。
+
+## 打包和 CodaBench 回执（2026-09-26）
+
+- 提交包：`work/submission-v0.8.0-20260925/submission.zip`（受
+  `.gitignore` 保护，不进入公开仓库）
+- SHA-256：
+  `52ae5d41f9d89f991005767daccfc89651ba39dc53e97cd6a8f4a9cc5c94cbeb`
+- ZIP 内容仅为 `submission.json` 与 `team-claim.json`。
+- 官方 toolkit 校验通过：描述符为 coding/dev/api，镜像引用与本报告记录的
+  v0.8.0 digest 一致，team claim 中的描述符哈希与原始
+  `submission.json` 一致。
+- CodaBench 提交 ID：`945527`
+- 平台显示文件名：`submission.zip`
+- 提交时间：`2026-09-26 09:04`（GMT+8）
+- 首次确认状态：`Submitting`
+- 上传后额度：当日 `1/1`，总计 `6/23`
+
+`Submitting` 只表示平台已经接收并将任务放入队列，不代表评测完成或获得分数。
+Team ID、Team Key 和 team claim 均未写入本报告或 Git。
