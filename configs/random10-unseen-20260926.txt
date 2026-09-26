@@ -1,0 +1,13 @@
+# Uniform sample without replacement from the 77 public task IDs not present
+# in configs/random10-20260923.txt.
+# Python random.Random(20260926).sample(pool, 10); preserve drawn order.
+t1-bs-greeks-pde
+t1-binance-btc-participation-tca
+t1-alpha-hedge-strategy
+t1-etf-overlap-redemption-pressure
+t1-sma-crossover-spy
+t1-cta-basel-capital
+t1-barrier-garch-var
+t1-copula-equity-fitting
+t1-mc-greek-surface-1
+t1-sentiment-factor-alpha

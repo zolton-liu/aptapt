@@ -1,0 +1,20 @@
+{
+  "all_public_task_count": 87,
+  "excluded_task_count": 10,
+  "excluded_task_list": "configs/random10-20260923.txt",
+  "method": "Python random.Random(seed).sample(sorted_remaining_pool, 10)",
+  "remaining_pool_count": 77,
+  "seed": 20260926,
+  "selected_in_order": [
+    "t1-bs-greeks-pde",
+    "t1-binance-btc-participation-tca",
+    "t1-alpha-hedge-strategy",
+    "t1-etf-overlap-redemption-pressure",
+    "t1-sma-crossover-spy",
+    "t1-cta-basel-capital",
+    "t1-barrier-garch-var",
+    "t1-copula-equity-fitting",
+    "t1-mc-greek-surface-1",
+    "t1-sentiment-factor-alpha"
+  ]
+}
