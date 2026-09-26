@@ -3,7 +3,7 @@
 ARG BASE_IMAGE=finance-bench-sandbox:latest
 FROM ${BASE_IMAGE}
 
-ARG AGENT_VERSION=0.8.0
+ARG AGENT_VERSION=0.8.1
 ARG VCS_REF=unknown
 
 WORKDIR /opt/qfa-agent

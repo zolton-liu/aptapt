@@ -80,7 +80,8 @@ Agent 后又加入显式状态图、确定性失败分类、重复失败升级�
 ### 日常开发：本地模型 + Git 检查点
 
 当前开发分支是 `dev/local-verifier`；`checkpoint/v6.2-submitted-20260924` 保留已提交比赛版本。
-准备上传的当前版本为 **v0.8.0**；对应固定十题本地公开集严格 pass@1 为 **8/10**，完整审计见
+当前修复版本为 **v0.8.1**，基于 v0.8.0 checkpoint 增加 House endpoint 的 thinking
+关闭与兼容清理；v0.8.0 对应固定十题本地公开集严格 pass@1 为 **8/10**，完整审计见
 [v6.8 结果报告](reports/v6.8-random10-20260925-results.md)。
 恢复的 v6.3–v6.5 检查点见 [版本恢复记录](reports/version-recovery-20260924.md)。
 它们是从现存副本恢复的提交，不代表完整的历史编辑记录；没有可靠 v5.6 源码，不能精确回退。
@@ -152,7 +153,9 @@ HTTPS_PROXY     审计代理（urllib 自动读取）
 NO_PROXY        必须绕过代理的 host
 ```
 
-实现调用 `$MODEL_ENDPOINT/v1/chat/completions`，并发送 `Authorization: Bearer $MODEL_TOKEN`；
+实现调用 `$MODEL_ENDPOINT/v1/chat/completions`，发送 `Authorization: Bearer $MODEL_TOKEN`，
+并在每次请求中设置 `chat_template_kwargs: {"enable_thinking": false}`；若兼容服务仍返回
+完整的 `<think>...</think>` 前缀，也会在解析工具 JSON 前将其移除。
 不会添加 vendor tools、网页搜索、远程代码执行或检索。只有显式存在 `MODEL_ENDPOINT` 与
 `MODEL_NAME` 时才会联网；正式 restricted runtime 缺少 token 会直接失败。开发时还可使用：
 
@@ -190,9 +193,9 @@ docker build -t finance-bench-sandbox:latest -f docker/sandbox.Dockerfile .
 
 ```bash
 docker build \
-  --build-arg AGENT_VERSION=0.8.0 \
+  --build-arg AGENT_VERSION=0.8.1 \
   --build-arg VCS_REF="$(git rev-parse HEAD)" \
-  -t agenthon-t1-minimal:0.8.0 .
+  -t agenthon-t1-minimal:0.8.1 .
 ```
 
 `Dockerfile` 继承官方 Python 3.13 金融栈，并包含强制 label：
@@ -215,7 +218,7 @@ docker run --rm --network=none \
   -v "$ROOT/examples/demo_responses.json:/fixtures/demo_responses.json:ro" \
   -v "$OUT:/app/output" \
   -v "$OUT:/output" \
-  agenthon-t1-minimal:0.8.0 \
+  agenthon-t1-minimal:0.8.1 \
   solve --task-dir /input --out /app/output
 ```
 

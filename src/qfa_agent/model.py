@@ -20,6 +20,24 @@ class ModelError(RuntimeError):
     pass
 
 
+def _strip_thinking_prefix(content: str) -> str:
+    """Remove complete Qwen-style thinking blocks before the final answer.
+
+    House supports disabling thinking in the request. This narrow fallback
+    also prevents a JSON-looking object inside a reasoning block from being
+    mistaken for the tool action if a serving template ignores that option.
+    Incomplete blocks are left untouched so truncated responses fail visibly.
+    """
+
+    stripped = content.lstrip()
+    while stripped.startswith("<think>"):
+        end = stripped.find("</think>")
+        if end < 0:
+            return content
+        stripped = stripped[end + len("</think>") :].lstrip()
+    return stripped
+
+
 @dataclass(frozen=True)
 class ModelReply:
     content: str | dict[str, Any]
@@ -118,6 +136,9 @@ class HouseEndpointModel:
             "temperature": 0,
             "seed": self.seed,
             "max_tokens": min(4000, max(1, int(os.environ.get("QFA_MAX_RESPONSE_TOKENS", "4000")))),
+            # House Qwen models otherwise emit a reasoning preamble before the
+            # JSON tool action (HOUSE-MODEL.md).
+            "chat_template_kwargs": {"enable_thinking": False},
             # Deliberately no `tools`, retrieval, web search, or remote code execution.
         }
         if os.environ.get("QFA_JSON_MODE", "").strip().lower() in {"1", "true", "yes", "on"}:
@@ -160,7 +181,14 @@ class HouseEndpointModel:
             time.sleep(min(0.5 * (attempt + 1), max(0.0, remaining / 20.0)))
         if body is None:
             kind = type(last_error).__name__ if last_error is not None else "TimeoutError"
-            raise ModelError(f"house model request failed after bounded retries: {kind}") from last_error
+            status = (
+                f" status={last_error.code}"
+                if isinstance(last_error, urllib.error.HTTPError)
+                else ""
+            )
+            raise ModelError(
+                f"house model request failed after bounded retries: {kind}{status}"
+            ) from last_error
         try:
             decoded = json.loads(body)
             content = decoded["choices"][0]["message"]["content"]
@@ -175,6 +203,7 @@ class HouseEndpointModel:
             )
         if not isinstance(content, str):
             raise ModelError("house endpoint returned non-text message content")
+        content = _strip_thinking_prefix(content)
         return ModelReply(
             content=content,
             input_tokens=int(usage.get("prompt_tokens", 0) or 0),
